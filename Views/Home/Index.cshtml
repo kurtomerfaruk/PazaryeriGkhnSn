@@ -1,10 +1,16 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Dashboard";
 }
 
-@model IEnumerable<Pazaryeri.Models.ErrorViewModel>
-
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="card">
+    <div class="card-body">
+        <h3>Hoşgeldin!</h3>
+        <p>Bu sayfa AdminLTE layout ile render edildi.</p>
+    </div>
 </div>
+
+@section Scripts {
+    <script>
+        console.log("Dashboard loaded");
+    </script>
+}
