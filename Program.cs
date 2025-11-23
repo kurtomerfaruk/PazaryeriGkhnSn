@@ -17,6 +17,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<IRepository<Product>, ProductRepository>();
 builder.Services.AddScoped<ProductService>();
 
+builder.Services.AddScoped<IRepository<TrendyolSiparis>, TrendyolSiparisRepository>();
+builder.Services.AddScoped<TrendyolSiparisService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
