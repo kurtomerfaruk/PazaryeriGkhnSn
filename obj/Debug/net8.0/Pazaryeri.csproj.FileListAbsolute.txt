@@ -177,3 +177,6 @@ D:\Destek\Projeler\Gökhan Esen\Pazaryeri\bin\Debug\net8.0\ExcelNumberFormat.dll
 D:\Destek\Projeler\Gökhan Esen\Pazaryeri\bin\Debug\net8.0\RBush.dll
 D:\Destek\Projeler\Gökhan Esen\Pazaryeri\bin\Debug\net8.0\SixLabors.Fonts.dll
 D:\Destek\Projeler\Gökhan Esen\Pazaryeri\bin\Debug\net8.0\System.IO.Packaging.dll
+D:\Destek\Projeler\Gökhan Esen\Pazaryeri\obj\Debug\net8.0\Pazaryeri.sourcelink.json
+D:\Destek\Projeler\Gökhan Esen\Pazaryeri\bin\Debug\net8.0\Newtonsoft.Json.dll
+D:\Destek\Projeler\Gökhan Esen\Pazaryeri\bin\Debug\net8.0\RestSharp.dll
