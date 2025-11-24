@@ -11,15 +11,13 @@ namespace Pazaryeri.Controllers
         private readonly IOrderRepository _orderRepository;
         private readonly IPlatformServiceFactory _platformServiceFactory;
         private readonly ILogger<OrderController> _logger;
-        private readonly IOrderSyncService _orderSyncService;
         private readonly IConfiguration _configuration;
 
-        public OrderController(IOrderRepository orderRepository, IPlatformServiceFactory platformServiceFactory, ILogger<OrderController> logger, IOrderSyncService orderSyncService, IConfiguration configuration)
+        public OrderController(IOrderRepository orderRepository, IPlatformServiceFactory platformServiceFactory, ILogger<OrderController> logger, IConfiguration configuration)
         {
             _orderRepository = orderRepository;
             _platformServiceFactory = platformServiceFactory;
             _logger = logger;
-            _orderSyncService = orderSyncService;
             _configuration = configuration;
         }
 
@@ -83,29 +81,34 @@ namespace Pazaryeri.Controllers
             };
         }
 
-
         [HttpPost]
-        public async Task<IActionResult> FetchPlatformOrders(string platform)
+        public async Task<IActionResult> FetchTrendyolOrders()
         {
             try
             {
-                var platformService = _platformServiceFactory.GetService(platform);
-                var platformOrders = await platformService.GetOrdersAsync();
-
+                var trendyolService = _platformServiceFactory.GetTrendyolService();
+                List<Order> orders = await trendyolService.GetOrdersAsync();
                 int addedCount = 0;
-                foreach (var order in platformOrders)
+                int updatedCount = 0;
+                foreach (var order in orders)
                 {
-                    if (!await _orderRepository.OrderExistsAsync(order.OrderNumber, order.Platform))
+                    var ord = await _orderRepository.OrderExistsAsync(order.OrderNumber, order.Platform);
+
+                    if (ord!=null)
+                    {
+                        await _orderRepository.UpdateAsync(order);
+                        updatedCount++;
+                    }
+                    else
                     {
                         await _orderRepository.CreateAsync(order);
                         addedCount++;
                     }
                 }
-
                 return Json(new
                 {
                     success = true,
-                    message = $"{platformService.PlatformName} için {addedCount} yeni sipariş eklendi."
+                    message = $"Trendyol için {addedCount} yeni sipariş eklendi. {updatedCount} sipariş güncellendi."
                 });
             }
             catch (Exception ex)
@@ -113,61 +116,11 @@ namespace Pazaryeri.Controllers
                 return Json(new
                 {
                     success = false,
-                    message = $"{platform} siparişleri çekilirken hata: {ex.Message}"
+                    message = $"Trendyol siparişleri çekilirken hata: {ex.Message}"
                 });
             }
         }
 
-
-        [HttpPost]
-        public async Task<IActionResult> FetchAllPlatformOrders()
-        {
-            try
-            {
-                var platforms = _platformServiceFactory.GetAvailablePlatforms();
-                var results = new List<object>();
-                int totalAdded = 0;
-
-                foreach (var platform in platforms)
-                {
-                    var platformService = _platformServiceFactory.GetService(platform);
-                    var platformOrders = await platformService.GetOrdersAsync();
-
-                    int platformAdded = 0;
-                    foreach (var order in platformOrders)
-                    {
-                        if (!await _orderRepository.OrderExistsAsync(order.OrderNumber, order.Platform))
-                        {
-                            await _orderRepository.CreateAsync(order);
-                            platformAdded++;
-                            totalAdded++;
-                        }
-                    }
-
-                    results.Add(new
-                    {
-                        platform = platformService.PlatformName,
-                        added = platformAdded,
-                        total = platformOrders.Count
-                    });
-                }
-
-                return Json(new
-                {
-                    success = true,
-                    message = $"{totalAdded} yeni sipariş eklendi.",
-                    details = results
-                });
-            }
-            catch (Exception ex)
-            {
-                return Json(new
-                {
-                    success = false,
-                    message = $"Siparişler çekilirken hata: {ex.Message}"
-                });
-            }
-        }
 
         [HttpGet]
         public async Task<IActionResult> GetOrderDetails(int id)
@@ -218,43 +171,31 @@ namespace Pazaryeri.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> ManualSync()
+        public async Task<IActionResult> UpdateTrendyolStatus(int orderId, string status)
         {
             try
             {
-                _logger.LogInformation("Manuel senkronizasyon başlatıldı");
-
-                await _orderSyncService.SyncOrdersAsync();
-
-                return Json(new
+                var order = await _orderRepository.GetByIdAsync(orderId);
+                if (order?.Platform != OrderPlatform.Trendyol)
                 {
-                    success = true,
-                    message = "Manuel senkronizasyon başarıyla tamamlandı",
-                    time = DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss")
-                });
+                    return Json(new { success = false, message = "Sadece Trendyol siparişleri güncellenebilir" });
+                }
+
+                var trendyolService = _platformServiceFactory.GetTrendyolService();
+                var result = await trendyolService.UpdateOrderStatus(order);
+
+                if (result)
+                {
+                    order.Status = status;
+                    await _orderRepository.UpdateAsync(order);
+                }
+
+                return Json(new { success = result, message = result ? "Durum güncellendi" : "Güncelleme başarısız" });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Manuel senkronizasyon sırasında hata oluştu");
-                return Json(new
-                {
-                    success = false,
-                    message = $"Senkronizasyon hatası: {ex.Message}"
-                });
+                return Json(new { success = false, message = ex.Message });
             }
-        }
-
-        [HttpGet]
-        public IActionResult SyncStatus()
-        {
-            var intervalMinutes = _configuration.GetValue<int>("SyncSettings:IntervalMinutes", 5);
-            // Son senkronizasyon durumunu döndürebilirsiniz
-            return Json(new
-            {
-                lastSync = DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss"),
-                nextSync = DateTime.Now.AddMinutes(intervalMinutes).ToString("dd.MM.yyyy HH:mm:ss"),
-                isRunning = true
-            });
         }
 
     }

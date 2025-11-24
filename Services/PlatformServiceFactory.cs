@@ -5,21 +5,17 @@
         private readonly IConfiguration _configuration;
         private readonly IServiceProvider _serviceProvider;
 
-        public PlatformServiceFactory(IConfiguration configuration, IServiceProvider serviceProvider)
+        public PlatformServiceFactory(IServiceProvider serviceProvider)
         {
-            _configuration = configuration;
             _serviceProvider = serviceProvider;
         }
 
-        public IPlatformService GetService(string platformName)
+        public TrendyolService GetTrendyolService()
         {
-            return platformName.ToLower() switch
-            {
-                "trendyol" => _serviceProvider.GetRequiredService<TrendyolService>(),
-                _ => throw new ArgumentException($"Bilinmeyen platform: {platformName}")
-            };
+            return _serviceProvider.GetRequiredService<TrendyolService>();
         }
 
+      
         public List<string> GetAvailablePlatforms()
         {
             return new List<string> { "Trendyol" };

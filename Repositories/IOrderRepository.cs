@@ -10,7 +10,7 @@ namespace Pazaryeri.Repositories
         Task<Order> UpdateAsync(Order siparis);
         Task DeleteAsync(int id);
         Task<(List<Order> Orders, int TotalCount)> GetPagedOrdersAsync(int start, int length, string search, string sortColumn, string sortDirection);
-        Task<bool> OrderExistsAsync(string orderNumber, OrderPlatform platform);
+        Task<Models.Order> OrderExistsAsync(string orderNumber, OrderPlatform platform);
         Task<Order> GetWithDetailsAsync(int id);
         Task<TrendyolOrderDetail> GetTrendyolOrderDetailAsync(int orderId);
     }

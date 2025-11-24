@@ -17,10 +17,10 @@ namespace Pazaryeri.Repositories
             _context = context;
         }
 
-        public async Task<bool> OrderExistsAsync(string orderNumber, OrderPlatform platform)
+        public async Task<Models.Order> OrderExistsAsync(string orderNumber, OrderPlatform platform)
         {
             return await _context.Orders
-                .AnyAsync(o => o.OrderNumber == orderNumber && o.Platform == platform);
+                .FirstOrDefaultAsync(o => o.OrderNumber == orderNumber && o.Platform == platform);
         }
 
         public async Task<(List<Models.Order> Orders, int TotalCount)> GetPagedOrdersAsync(int start, int length, string search, string sortColumn, string sortDirection)
@@ -80,6 +80,7 @@ namespace Pazaryeri.Repositories
         public async Task<Models.Order> GetByIdAsync(int id)
         {
             return await _context.Orders
+                .Include(o=>o.TrendyolDetails)
                 .FirstOrDefaultAsync(o=>o.Id==id);
         }
 

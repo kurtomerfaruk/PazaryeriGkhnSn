@@ -4728,6 +4728,7 @@ wwwroot\app-assets\vendors\js\extensions\offline.min.js
 wwwroot\app-assets\vendors\js\extensions\pace.min.js
 wwwroot\app-assets\vendors\js\extensions\sweetalert.min.js
 wwwroot\app-assets\vendors\js\extensions\timedropper.min.js
+wwwroot\app-assets\vendors\js\extensions\toastr.min.js
 wwwroot\app-assets\vendors\js\extensions\transition.js
 wwwroot\app-assets\vendors\js\extensions\underscore-min.js
 wwwroot\app-assets\vendors\js\extensions\wNumb.js
@@ -4882,4 +4883,3 @@ wwwroot\css\site.css
 wwwroot\favicon.ico
 wwwroot\i18n\tr.json
 wwwroot\js\site.js
-wwwroot\app-assets\vendors\js\extensions\toastr.min.js

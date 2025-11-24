@@ -10,15 +10,8 @@
     </div>
     <div class="content-header-right col-md-6 col-12">
         <div class="dropdown float-md-right">
-            <button id="manualSync" class="btn btn-info btn-min-width">
-                <i class="fas fa-sync-alt"></i> Şimdi Senkronize Et
-            </button>
-        </div>
-        <div class="dropdown float-md-right">
             <button class="btn btn-primary dropdown-toggle px-2" id="dropdownBreadcrumbButton" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Siparişleri Çek</button>
             <div class="dropdown-menu" aria-labelledby="dropdownBreadcrumbButton">
-                <a class="dropdown-item fetch-platform" href="#" data-platform="all">Tüm Platformlar</a>
-                <div class="dropdown-divider"></div>
                 @foreach (var platform in ViewBag.Platforms)
                 {
                     <a class="dropdown-item fetch-platform" href="#" data-platform="@platform">@platform</a>
@@ -49,14 +42,12 @@
 
 @section Scripts {
 
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-
-
     <link href="~/app-assets/vendors/css/tables/datatable/datatables.min.css" rel="stylesheet" />
     <link href="~/app-assets/vendors/css/tables/extensions/buttons.datatables.min.css" rel="stylesheet" />
     <link href="~/app-assets/vendors/css/tables/datatable/buttons.bootstrap4.min.css" rel="stylesheet" />
-    <link href="~/app-assets/vendors/css/extensions/toastr.css" rel="stylesheet" />
-    <link href="~/app-assets/css/plugins/extensions/toastr.min.css" rel="stylesheet" />
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.4/toastr.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.4/toastr.min.css" rel="stylesheet">
 
     <script src="~/app-assets/vendors/js/tables/datatable/datatables.min.js"></script>
     <script src="~/app-assets/vendors/js/tables/datatable/datatables.buttons.min.js"></script>
@@ -67,7 +58,6 @@
     <script src="~/app-assets/vendors/js/tables/buttons.html5.min.js"></script>
     <script src="~/app-assets/vendors/js/tables/buttons.print.min.js"></script>
     <script src="~/app-assets/vendors/js/tables/buttons.colvis.min.js"></script>
-    <script src="~/app-assets/vendors/js/extensions/toastr.min.js"></script>
     
     <script>
         $(document).ready(function () {
@@ -97,22 +87,38 @@
                     {
                         data: 'actions',
                         render: function (data, type, row) {
-                            return `
-                                <div class="btn-group">
-                                    <button class="btn btn-sm btn-info details-btn" data-id="${row.id}" data-toggle="tooltip" title="Detay">
-                                    <i class="la la-eye"></i>
+                            var html =`<button class="btn btn-sm btn-info details-btn" data-id="${row.id}" data-toggle="tooltip" title="Detay">
+                                        <i class="la la-eye"></i>
+                                    </button>`;
+
+                             if(row.status==="Oluşturuldu"){
+                                  html+=`
+                                <button class="btn btn-sm btn-primary update-status"
+                                        data-order-id="${data}"
+                                        data-status="Hazırlanıyor" data-toggle="tooltip" title="Hazırlanıyor">
+                                   <i class="la la-check"></i>
                                 </button>
-                                    <a href="@Url.Action("Approve")/${data}" class="btn btn-sm btn-warning" data-toggle="tooltip" title="Onayla">
-                                        <i class="la la-check"></i>
-                                    </a>
-                                </div>
-                            `;
+                                `;
+                             }
+
+                             return html;
+                            
+                            // return `
+                            //     <div class="btn-group">
+                            //         <button class="btn btn-sm btn-info details-btn" data-id="${row.id}" data-toggle="tooltip" title="Detay">
+                            //             <i class="la la-eye"></i>
+                            //         </button>
+                            //         <a href="@Url.Action("UpdateTrendyolStatus")/${data}/picking" class="btn btn-sm btn-warning" data-toggle="tooltip" title="Onayla">
+                            //             <i class="la la-check"></i>
+                            //         </a>
+                            //     </div>
+                            // `;
                         },
                         orderable: false
                     },
 
                 ],
-                order: [[0, 'desc']],
+                order: [[2, 'desc']],
                 language: {
                     url: '../i18n/tr.json'
                 }
@@ -122,6 +128,27 @@
                 var orderId = $(this).data('id');
                 showOrderDetails(orderId);
             });
+
+            $('#ordersTable').on('click', '.update-status', function () {
+                var orderId = $(this).data('order-id');
+                var status = $(this).data('status');
+
+                $.post('@Url.Action("UpdateTrendyolStatus")', {
+                    orderId: orderId,
+                    status: status
+                })
+                .done(function (response) {
+                    if (response.success) {
+                        toastr.success(response.message);
+                        table.ajax.reload(null, false);
+                    } else {
+                        toastr.error(response.message);
+                    }
+                })
+                .fail(function () {
+                    toastr.error('Güncelleme sırasında hata oluştu');
+                });
+        });
 
              function showOrderDetails(orderId) {
                 $.get('@Url.Action("GetOrderDetails")', { id: orderId })
@@ -137,6 +164,8 @@
                         toastr.error('Detaylar yüklenirken hata oluştu.');
                     });
             }
+
+                
 
             function showOrderDetailsModal(data) {
             // Modal HTML'i oluştur
@@ -264,14 +293,15 @@
 
                 $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Çekiliyor...');
 
-                var url = platform === 'all'
-                    ? '@Url.Action("FetchAllPlatformOrders")'
-                    : '@Url.Action("FetchPlatformOrders")';
+                var url = platform === 'Trendyol'
+                    ? '@Url.Action("FetchTrendyolOrders")'
+                    : '';
 
                 var data = platform === 'all' ? {} : { platform: platform };
 
                 $.post(url, data)
                     .done(function (response) {
+                        console.log(JSON.stringify(response));
                         if (response.success) {
                             table.ajax.reload();
                             if (platform === 'all' && response.details) {
@@ -294,40 +324,6 @@
                     });
             });
 
-             $('#manualSync').click(function () {
-                var $btn = $(this);
-                $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Senkronize Ediliyor...');
-
-                $.post('@Url.Action("ManualSync")')
-                    .done(function (response) {
-
-                        if (response.success) {
-                            toastr.success(response.message);
-                            // Tabloyu yenile
-                            table.ajax.reload();
-                        } else {
-                            toastr.error(response.message);
-                        }
-                    })
-                    .fail(function () {
-                        toastr.error('Senkronizasyon sırasında hata oluştu');
-                    })
-                    .always(function () {
-                        $btn.prop('disabled', false).html('<i class="fas fa-sync-alt"></i> Şimdi Senkronize Et');
-                    });
-            });
-
-            // Otomatik senkronizasyon durumunu göster
-            function showSyncStatus() {
-                $.get('@Url.Action("SyncStatus")')
-                    .done(function (status) {
-                        console.log('Son senkronizasyon:', status.lastSync);
-                        console.log('Sonraki senkronizasyon:', status.nextSync);
-                    });
-            }
-
-            // Sayfa yüklendiğinde status'ü al
-            showSyncStatus();
         });
     </script>
 }

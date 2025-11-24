@@ -21,8 +21,6 @@ builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 
 builder.Services.AddScoped<TrendyolService>();
 
-builder.Services.AddScoped<IOrderSyncService, OrderSyncService>();
-builder.Services.AddHostedService<OrderSyncBackgroundService>();
 
 var app = builder.Build();
 

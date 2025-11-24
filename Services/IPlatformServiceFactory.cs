@@ -2,7 +2,7 @@
 {
     public interface IPlatformServiceFactory
     {
-        IPlatformService GetService(string platformName);
+        TrendyolService GetTrendyolService();
         List<string> GetAvailablePlatforms();
     }
 }
