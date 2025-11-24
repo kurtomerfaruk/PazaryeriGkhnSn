@@ -14,11 +14,15 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
 
-builder.Services.AddScoped<IRepository<Product>, ProductRepository>();
-builder.Services.AddScoped<ProductService>();
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IPlatformServiceFactory, PlatformServiceFactory>();
 
-builder.Services.AddScoped<IRepository<TrendyolSiparis>, TrendyolSiparisRepository>();
-builder.Services.AddScoped<TrendyolSiparisService>();
+builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
+
+builder.Services.AddScoped<TrendyolService>();
+
+builder.Services.AddScoped<IOrderSyncService, OrderSyncService>();
+builder.Services.AddHostedService<OrderSyncBackgroundService>();
 
 var app = builder.Build();
 

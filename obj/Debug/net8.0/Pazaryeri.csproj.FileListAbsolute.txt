@@ -168,7 +168,6 @@ D:\Destek\Projeler\Gökhan Esen\Pazaryeri\bin\Debug\net8.0\ru\Microsoft.CodeAnal
 D:\Destek\Projeler\Gökhan Esen\Pazaryeri\bin\Debug\net8.0\tr\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
 D:\Destek\Projeler\Gökhan Esen\Pazaryeri\bin\Debug\net8.0\zh-Hans\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
 D:\Destek\Projeler\Gökhan Esen\Pazaryeri\bin\Debug\net8.0\zh-Hant\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
-D:\Destek\Projeler\Gökhan Esen\Pazaryeri\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
 D:\Destek\Projeler\Gökhan Esen\Pazaryeri\bin\Debug\net8.0\ClosedXML.dll
 D:\Destek\Projeler\Gökhan Esen\Pazaryeri\bin\Debug\net8.0\ClosedXML.Parser.dll
 D:\Destek\Projeler\Gökhan Esen\Pazaryeri\bin\Debug\net8.0\DocumentFormat.OpenXml.dll
@@ -180,3 +179,4 @@ D:\Destek\Projeler\Gökhan Esen\Pazaryeri\bin\Debug\net8.0\System.IO.Packaging.d
 D:\Destek\Projeler\Gökhan Esen\Pazaryeri\obj\Debug\net8.0\Pazaryeri.sourcelink.json
 D:\Destek\Projeler\Gökhan Esen\Pazaryeri\bin\Debug\net8.0\Newtonsoft.Json.dll
 D:\Destek\Projeler\Gökhan Esen\Pazaryeri\bin\Debug\net8.0\RestSharp.dll
+D:\Destek\Projeler\Gökhan Esen\Pazaryeri\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt

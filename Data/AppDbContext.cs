@@ -7,7 +7,8 @@ namespace Pazaryeri.Data
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
-        public DbSet<Product> Products => Set<Product>();
-        public DbSet<TrendyolSiparis> TrendyolSiparisler => Set<TrendyolSiparis>();
+        public DbSet<Order> Orders => Set<Order>();
+        public DbSet<TrendyolOrderDetail> TrendyolOrderDetails => Set<TrendyolOrderDetail>();    
+     
     }
 }

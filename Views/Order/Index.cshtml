@@ -1,0 +1,333 @@
+﻿@{
+    ViewData["Title"] = "Siparişler";
+}
+
+@model IEnumerable<Order>
+
+<div class="content-header row">
+    <div class="content-header-left col-md-6 col-12 mb-2 breadcrumb-new">
+        <h3 class="content-header-title mb-0 d-inline-block">Sipariş Yönetimi</h3>
+    </div>
+    <div class="content-header-right col-md-6 col-12">
+        <div class="dropdown float-md-right">
+            <button id="manualSync" class="btn btn-info btn-min-width">
+                <i class="fas fa-sync-alt"></i> Şimdi Senkronize Et
+            </button>
+        </div>
+        <div class="dropdown float-md-right">
+            <button class="btn btn-primary dropdown-toggle px-2" id="dropdownBreadcrumbButton" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Siparişleri Çek</button>
+            <div class="dropdown-menu" aria-labelledby="dropdownBreadcrumbButton">
+                <a class="dropdown-item fetch-platform" href="#" data-platform="all">Tüm Platformlar</a>
+                <div class="dropdown-divider"></div>
+                @foreach (var platform in ViewBag.Platforms)
+                {
+                    <a class="dropdown-item fetch-platform" href="#" data-platform="@platform">@platform</a>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <table id="ordersTable" class="table table-striped table-bordered" style="width:100%">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Platform</th>
+                    <th>Tarih</th>
+                    <th>Sipariş No</th>
+                    <th>Müşteri</th>
+                    <th>Toplam</th>
+                    <th>Durum</th>
+                    <th>İşlemler</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+
+    <link href="~/app-assets/vendors/css/tables/datatable/datatables.min.css" rel="stylesheet" />
+    <link href="~/app-assets/vendors/css/tables/extensions/buttons.datatables.min.css" rel="stylesheet" />
+    <link href="~/app-assets/vendors/css/tables/datatable/buttons.bootstrap4.min.css" rel="stylesheet" />
+    <link href="~/app-assets/vendors/css/extensions/toastr.css" rel="stylesheet" />
+    <link href="~/app-assets/css/plugins/extensions/toastr.min.css" rel="stylesheet" />
+
+    <script src="~/app-assets/vendors/js/tables/datatable/datatables.min.js"></script>
+    <script src="~/app-assets/vendors/js/tables/datatable/datatables.buttons.min.js"></script>
+    <script src="~/app-assets/vendors/js/tables/datatable/buttons.bootstrap4.min.js"></script>
+    <script src="~/app-assets/vendors/js/tables/jszip.min.js"></script>
+    <script src="~/app-assets/vendors/js/tables/pdfmake.min.js"></script>
+    <script src="~/app-assets/vendors/js/tables/vfs_fonts.js"></script>
+    <script src="~/app-assets/vendors/js/tables/buttons.html5.min.js"></script>
+    <script src="~/app-assets/vendors/js/tables/buttons.print.min.js"></script>
+    <script src="~/app-assets/vendors/js/tables/buttons.colvis.min.js"></script>
+    <script src="~/app-assets/vendors/js/extensions/toastr.min.js"></script>
+    
+    <script>
+        $(document).ready(function () {
+            var table = $('#ordersTable').DataTable({
+                processing: true,
+                serverSide: true,
+                    dom: 'Bfrtip',
+                    buttons: [
+                        'excelHtml5',
+                        'pdfHtml5'
+                    ],
+                ajax: {
+                    url: '@Url.Action("GetOrders")',
+                    type: 'POST'
+                },
+                 drawCallback: function (settings, json) {
+                    $('[data-toggle="tooltip"]').tooltip();
+                },
+                columns: [
+                    { data: 'id',name:'id' },
+                    { data: 'platform',name:'platform' },
+                    { data: 'orderDate',name:'orderDate' },
+                    { data: 'orderNumber' ,name:'orderNumber'},
+                    { data: 'customerName' ,name:'customerName'},
+                    { data: 'totalPrice' ,name:'totalPrice'},
+                    { data: 'status' ,name:'status'},
+                    {
+                        data: 'actions',
+                        render: function (data, type, row) {
+                            return `
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-info details-btn" data-id="${row.id}" data-toggle="tooltip" title="Detay">
+                                    <i class="la la-eye"></i>
+                                </button>
+                                    <a href="@Url.Action("Approve")/${data}" class="btn btn-sm btn-warning" data-toggle="tooltip" title="Onayla">
+                                        <i class="la la-check"></i>
+                                    </a>
+                                </div>
+                            `;
+                        },
+                        orderable: false
+                    },
+
+                ],
+                order: [[0, 'desc']],
+                language: {
+                    url: '../i18n/tr.json'
+                }
+            });
+
+             $('#ordersTable').on('click', '.details-btn', function () {
+                var orderId = $(this).data('id');
+                showOrderDetails(orderId);
+            });
+
+             function showOrderDetails(orderId) {
+                $.get('@Url.Action("GetOrderDetails")', { id: orderId })
+                    .done(function (response) {
+                        if (response.success) {
+                            showOrderDetailsModal(response);
+                        } else {
+                            console.log(response.message);
+                            toastr.error(response.message);
+                        }
+                    })
+                    .fail(function () {
+                        toastr.error('Detaylar yüklenirken hata oluştu.');
+                    });
+            }
+
+            function showOrderDetailsModal(data) {
+            // Modal HTML'i oluştur
+            var modalHtml = `
+                <div class="modal fade" id="orderDetailsModal" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Sipariş Detayları - ${data.order.orderNumber}</h5>
+                                <button type="button" class="btn-close" data-dismiss="modal">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <!-- Tab navigasyon -->
+                                <ul class="nav nav-tabs" id="orderTabs" role="tablist">
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link active" data-toggle="tab" data-target="#orderInfo">
+                                            Sipariş Bilgisi
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" data-toggle="tab" data-target="#orderItems">
+                                            Ürünler (${data.items.length})
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" data-toggle="tab" data-target="#addressInfo">
+                                            Adres Bilgileri
+                                        </button>
+                                    </li>
+                                </ul>
+
+                                <div class="tab-content mt-3" id="orderTabContent">
+                                    <!-- Sipariş Bilgisi -->
+                                    <div class="tab-pane fade show active" id="orderInfo">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <table class="table table-sm">
+                                                    <tr><th>Sipariş No:</th><td>${data.order.orderNumber}</td></tr>
+                                                    <tr><th>Müşteri:</th><td>${data.order.customerName}</td></tr>
+                                                    <tr><th>E-posta:</th><td>${data.order.customerEmail}</td></tr>
+                                                    <tr><th>Platform:</th><td>${data.order.platform}</td></tr>
+                                                </table>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <table class="table table-sm">
+                                                    <tr><th>Toplam Tutar:</th><td>${data.order.totalPrice}</td></tr>
+                                                    <tr><th>Durum:</th><td>${data.order.status}</td></tr>
+                                                    <tr><th>Sipariş Tarihi:</th><td>${data.order.orderDate}</td></tr>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Ürünler -->
+                                    <div class="tab-pane fade" id="orderItems">
+                                        <div class="table-responsive">
+                                            <table class="table table-striped table-sm">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Ürün Adı</th>
+                                                        <th>Barkod</th>
+                                                        <th>Fiyat</th>
+                                                        <th>Adet</th>
+                                                        <th>Toplam</th>
+                                                        <th>KDV</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    ${data.items.map(item => `
+                                                        <tr>
+                                                            <td>${item.productName}</td>
+                                                            <td>${item.barcode || '-'}</td>
+                                                            <td>${item.price}</td>
+                                                            <td>${item.quantity}</td>
+                                                            <td>${item.totalPrice}</td>
+                                                            <td>${item.vatRate || '-'}</td>
+                                                        </tr>
+                                                    `).join('')}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    <div class="tab-pane fade" id="addressInfo">
+                                       <div class="row">
+                                            <div class="col-md-6">
+                                                <h6> Fatura Adresi</h6>
+                                                 <div id="invoiceAddress">
+                                                    ${data.addresses.invoice}
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <h6> Teslimat Adresi</h6>
+                                                <div id="shipmentAddress">
+                                                    ${data.addresses.shipment}
+                                                </div>
+                                            </div>
+                                       </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Kapat</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            $('body').append(modalHtml);
+            var modal = new bootstrap.Modal(document.getElementById('orderDetailsModal'));
+            modal.show();
+
+            $('#orderDetailsModal').on('hidden.bs.modal', function () {
+                $(this).remove();
+            });
+        }
+
+            $('.fetch-platform').click(function (e) {
+                e.preventDefault();
+                var platform = $(this).data('platform');
+                var $btn = $('.btn-primary.dropdown-toggle');
+
+                $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Çekiliyor...');
+
+                var url = platform === 'all'
+                    ? '@Url.Action("FetchAllPlatformOrders")'
+                    : '@Url.Action("FetchPlatformOrders")';
+
+                var data = platform === 'all' ? {} : { platform: platform };
+
+                $.post(url, data)
+                    .done(function (response) {
+                        if (response.success) {
+                            table.ajax.reload();
+                            if (platform === 'all' && response.details) {
+                                var details = response.details.map(d =>
+                                    `${d.platform}: ${d.added}/${d.total} sipariş`
+                                ).join('\n');
+                                toastr.success(response.message + '\n' + details);
+                            } else {
+                                toastr.success(response.message);
+                            }
+                        } else {
+                            toastr.error(response.message);
+                        }
+                    })
+                    .fail(function () {
+                        toastr.error('Siparişler çekilirken hata oluştu.');
+                    })
+                    .always(function () {
+                        $btn.prop('disabled', false).html('<i class="fas fa-sync"></i> Siparişleri Çek');
+                    });
+            });
+
+             $('#manualSync').click(function () {
+                var $btn = $(this);
+                $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Senkronize Ediliyor...');
+
+                $.post('@Url.Action("ManualSync")')
+                    .done(function (response) {
+
+                        if (response.success) {
+                            toastr.success(response.message);
+                            // Tabloyu yenile
+                            table.ajax.reload();
+                        } else {
+                            toastr.error(response.message);
+                        }
+                    })
+                    .fail(function () {
+                        toastr.error('Senkronizasyon sırasında hata oluştu');
+                    })
+                    .always(function () {
+                        $btn.prop('disabled', false).html('<i class="fas fa-sync-alt"></i> Şimdi Senkronize Et');
+                    });
+            });
+
+            // Otomatik senkronizasyon durumunu göster
+            function showSyncStatus() {
+                $.get('@Url.Action("SyncStatus")')
+                    .done(function (status) {
+                        console.log('Son senkronizasyon:', status.lastSync);
+                        console.log('Sonraki senkronizasyon:', status.nextSync);
+                    });
+            }
+
+            // Sayfa yüklendiğinde status'ü al
+            showSyncStatus();
+        });
+    </script>
+}
