@@ -72,11 +72,11 @@ namespace Pazaryeri.Controllers
             }
         }
 
-        private string GetPlatformDisplayName(OrderPlatform platform)
+        private string GetPlatformDisplayName(Platform platform)
         {
             return platform switch
             {
-                OrderPlatform.Trendyol => "Trendyol",
+                Platform.Trendyol => "Trendyol",
                 _ => "Bilinmeyen"
             };
         }
@@ -176,7 +176,7 @@ namespace Pazaryeri.Controllers
             try
             {
                 var order = await _orderRepository.GetByIdAsync(orderId);
-                if (order?.Platform != OrderPlatform.Trendyol)
+                if (order?.Platform != Platform.Trendyol)
                 {
                     return Json(new { success = false, message = "Sadece Trendyol siparişleri güncellenebilir" });
                 }

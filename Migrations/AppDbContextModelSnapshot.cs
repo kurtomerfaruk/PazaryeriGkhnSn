@@ -22,6 +22,56 @@ namespace Pazaryeri.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("Pazaryeri.Models.Brand", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BrandId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Brands");
+                });
+
+            modelBuilder.Entity("Pazaryeri.Models.Category", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CategoryCode")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ParentCategoryId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Platform")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("TopCategory")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Categories");
+                });
+
             modelBuilder.Entity("Pazaryeri.Models.Order", b =>
                 {
                     b.Property<int>("Id")
@@ -92,6 +142,101 @@ namespace Pazaryeri.Migrations
                     b.ToTable("Orders");
                 });
 
+            modelBuilder.Entity("Pazaryeri.Models.Product", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Platform")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ProductMainId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Subtitle")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Title")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Products");
+                });
+
+            modelBuilder.Entity("Pazaryeri.Models.TrendyolAttribute", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AttributeId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("AttributeName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AttributeValue")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("AttributeValueId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ProductId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("ProductId1")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("TrendyolProductDetailId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId1");
+
+                    b.HasIndex("TrendyolProductDetailId");
+
+                    b.ToTable("TrendyolAttributes");
+                });
+
+            modelBuilder.Entity("Pazaryeri.Models.TrendyolImage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ProductId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("ProductId1")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("TrendyolProductDetailId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Url")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId1");
+
+                    b.HasIndex("TrendyolProductDetailId");
+
+                    b.ToTable("TrendyolImages");
+                });
+
             modelBuilder.Entity("Pazaryeri.Models.TrendyolOrderDetail", b =>
                 {
                     b.Property<int>("Id")
@@ -143,10 +288,140 @@ namespace Pazaryeri.Migrations
                     b.ToTable("TrendyolOrderDetails");
                 });
 
+            modelBuilder.Entity("Pazaryeri.Models.TrendyolProductDetail", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("ApprovalStatus")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Barcode")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("BrandId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CargoCompanyId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CurrencyType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<double>("DimensionalWeight")
+                        .HasColumnType("float");
+
+                    b.Property<decimal>("ListPrice")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<long>("ProductCode")
+                        .HasColumnType("bigint");
+
+                    b.Property<int?>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ProductMainId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ProductUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ReturningAddressId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("SalePrice")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<bool>("SaleStatus")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("ShipmentAddressId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("StockCode")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TrenyolProductId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("VatRate")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("TrendyolProductDetails");
+                });
+
+            modelBuilder.Entity("Pazaryeri.Models.TrendyolRejectReasonDetail", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ProductId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("ProductId1")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Reason")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("TrendyolProductDetailId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId1");
+
+                    b.HasIndex("TrendyolProductDetailId");
+
+                    b.ToTable("TrendyolRejectReasonDetails");
+                });
+
+            modelBuilder.Entity("Pazaryeri.Models.TrendyolAttribute", b =>
+                {
+                    b.HasOne("Pazaryeri.Models.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId1");
+
+                    b.HasOne("Pazaryeri.Models.TrendyolProductDetail", null)
+                        .WithMany("Attributes")
+                        .HasForeignKey("TrendyolProductDetailId");
+
+                    b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("Pazaryeri.Models.TrendyolImage", b =>
+                {
+                    b.HasOne("Pazaryeri.Models.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId1");
+
+                    b.HasOne("Pazaryeri.Models.TrendyolProductDetail", null)
+                        .WithMany("Images")
+                        .HasForeignKey("TrendyolProductDetailId");
+
+                    b.Navigation("Product");
+                });
+
             modelBuilder.Entity("Pazaryeri.Models.TrendyolOrderDetail", b =>
                 {
                     b.HasOne("Pazaryeri.Models.Order", "Order")
-                        .WithMany("SiparisDetays")
+                        .WithMany("TrendyolDetails")
                         .HasForeignKey("OrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -154,9 +429,45 @@ namespace Pazaryeri.Migrations
                     b.Navigation("Order");
                 });
 
+            modelBuilder.Entity("Pazaryeri.Models.TrendyolProductDetail", b =>
+                {
+                    b.HasOne("Pazaryeri.Models.Product", "Product")
+                        .WithMany("TrendyolDetails")
+                        .HasForeignKey("ProductId");
+
+                    b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("Pazaryeri.Models.TrendyolRejectReasonDetail", b =>
+                {
+                    b.HasOne("Pazaryeri.Models.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId1");
+
+                    b.HasOne("Pazaryeri.Models.TrendyolProductDetail", null)
+                        .WithMany("RejectReasonDetails")
+                        .HasForeignKey("TrendyolProductDetailId");
+
+                    b.Navigation("Product");
+                });
+
             modelBuilder.Entity("Pazaryeri.Models.Order", b =>
                 {
-                    b.Navigation("SiparisDetays");
+                    b.Navigation("TrendyolDetails");
+                });
+
+            modelBuilder.Entity("Pazaryeri.Models.Product", b =>
+                {
+                    b.Navigation("TrendyolDetails");
+                });
+
+            modelBuilder.Entity("Pazaryeri.Models.TrendyolProductDetail", b =>
+                {
+                    b.Navigation("Attributes");
+
+                    b.Navigation("Images");
+
+                    b.Navigation("RejectReasonDetails");
                 });
 #pragma warning restore 612, 618
         }

@@ -22,14 +22,14 @@ namespace Pazaryeri.Models
         public string TaxOffice { get; set; }
         public string TaxNumber { get; set; }
         public string Status { get; set; } = "Bekliyor";
-        public OrderPlatform Platform { get; set; } = OrderPlatform.Trendyol;
+        public Platform Platform { get; set; } = Platform.Trendyol;
         public decimal GrossAmount{ get; set; }
         public decimal TotalDiscount{ get; set; }
         public decimal TotalPrice{ get; set; }
         public List<TrendyolOrderDetail> TrendyolDetails { get; set; } = new List<TrendyolOrderDetail>();
     }
 
-    public enum OrderPlatform
+    public enum Platform
     {
         Trendyol = 0
     }

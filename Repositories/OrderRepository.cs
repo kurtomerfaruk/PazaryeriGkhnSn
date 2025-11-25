@@ -17,7 +17,7 @@ namespace Pazaryeri.Repositories
             _context = context;
         }
 
-        public async Task<Models.Order> OrderExistsAsync(string orderNumber, OrderPlatform platform)
+        public async Task<Models.Order> OrderExistsAsync(string orderNumber, Platform platform)
         {
             return await _context.Orders
                 .FirstOrDefaultAsync(o => o.OrderNumber == orderNumber && o.Platform == platform);
@@ -120,37 +120,6 @@ namespace Pazaryeri.Repositories
             throw new NotImplementedException();
         }
 
-        //public async Task<Models.Order> GetWithDetailsAsync(int id)
-        //{
-        //    return await _context.Siparisler
-        //        .Include(o => o.TrendyolSiparisDetay)
-        //        .FirstOrDefaultAsync(o => o.Id == id);
-        //}
-
-        //public async Task<List<Models.Order>> GetOrdersByPlatformAsync(OrderPlatform platform)
-        //{
-        //    return await _context.Siparisler
-        //        .Include(o => o.TrendyolSiparisDetay)
-        //        .Where(o => o.Platform == platform)
-        //        .ToListAsync();
-        //}
-
-        //public async Task SaveManualOrderAddresses(int orderId, Address invoiceAddress, Address shipmentAddress)
-        //{
-        //    var order = await _context.Siparisler.FindAsync(orderId);
-        //    if (order != null)
-        //    {
-        //        order.InvoiceAddressJson = JsonHelper.Serialize(invoiceAddress);
-        //        order.ShipmentAddressJson = JsonHelper.Serialize(shipmentAddress);
-        //        await _context.SaveChangesAsync();
-        //    }
-        //}
-
-        //// Trendyol detayları getir
-        //public async Task<TrendyolOrderDetail> GetTrendyolOrderDetailAsync(int orderId)
-        //{
-        //    return await _context.TrendyolSiparisDetays
-        //        .FirstOrDefaultAsync(t => t.OrderId == orderId);
-        //}
+       
     }
 }
