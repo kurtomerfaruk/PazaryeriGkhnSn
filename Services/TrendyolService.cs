@@ -1,9 +1,12 @@
-﻿using Newtonsoft.Json;
+﻿using DocumentFormat.OpenXml.Spreadsheet;
+using Newtonsoft.Json;
 using Pazaryeri.Entity.Trendyol;
 using Pazaryeri.Entity.Trendyol.Categories;
 using Pazaryeri.Entity.Trendyol.CategoryAttribute;
 using Pazaryeri.Entity.Trendyol.Orders;
 using Pazaryeri.Entity.Trendyol.Products;
+using Pazaryeri.Entity.Trendyol.Request;
+using Pazaryeri.Entity.Trendyol.Response;
 using Pazaryeri.Helper;
 using Pazaryeri.Models;
 using RestSharp;
@@ -83,32 +86,45 @@ namespace Pazaryeri.Services
             }
         }
 
-        public async Task<bool> UpdateStock(string merchantSku, int quantity)
+        public async Task<BatchRequestIdResponse> UpdateStockPrice(List<StockPriceRequest> list)
         {
             try
             {
-                var request = new RestRequest($"suppliers/{_configuration["Trendyol:SupplierId"]}/products/price-and-inventory", Method.Post);
-                var stockUpdate = new
+                var request = new RestRequest($"inventory/sellers/{_configuration["Trendyol:SupplierId"]}/products/price-and-inventory", Method.Post);
+
+                var param = new
                 {
-                    items = new[]
-                    {
-                    new
-                    {
-                        barcode = merchantSku,
-                        quantity = quantity
-                    }
-                }
+                    items = list,
                 };
 
-                request.AddJsonBody(stockUpdate);
+                var json = JsonConvert.SerializeObject(param);
+
+                request.AddJsonBody(json);
 
                 var response = await _client.ExecuteAsync(request);
-                return response.IsSuccessful;
+                return JsonConvert.DeserializeObject<BatchRequestIdResponse>(response.Content);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Trendyol stock update hatası: {MerchantSku}", merchantSku);
-                return false;
+                _logger.LogError(ex, "Trendyol stok fiyat guncellenirken hata olustu");
+                return new BatchRequestIdResponse();
+            }
+        }
+
+        public async Task<StockPriceBatchResponse> UpdateStockPriceBatchResult(string batchRequestId)
+        {
+            try
+            {
+                var request = new RestRequest($"product/sellers/{_configuration["Trendyol:SupplierId"]}/products/batch-requests/{batchRequestId}", Method.Get);
+
+
+                var response = await _client.ExecuteAsync(request);
+                return JsonConvert.DeserializeObject<StockPriceBatchResponse>(response.Content);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Trendyol stok fiyat guncellenirken hata olustu");
+                return new StockPriceBatchResponse();
             }
         }
 

@@ -135,7 +135,8 @@ namespace Pazaryeri.Repositories
             foreach (var group in Values)
             {
                 var existingProduct = await _context.Products
-                                    .Include(p => p.TrendyolDetails)
+                                    .Include(p => p.TrendyolDetails).ThenInclude(c=>c.Brand)
+                                    .Include(p=>p.TrendyolDetails).ThenInclude(c=>c.Category)
                                     .FirstOrDefaultAsync(p => p.ProductMainId == group.Key);
                 if (existingProduct == null)
                 {
@@ -165,11 +166,12 @@ namespace Pazaryeri.Repositories
                     }
                     else
                     {
-                        existingDetail.Brand = await _context.Brands.FirstOrDefaultAsync(b => b.BrandId == item.BrandId);
-                        existingDetail.Category = await _context.Categories.FirstOrDefaultAsync(c => c.CategoryId == item.CategoryId);
+                        
+                        var brand = await _context.Brands.FirstOrDefaultAsync(b => b.BrandId == item.BrandId);
+                        var category = await _context.Categories.FirstOrDefaultAsync(c => c.CategoryId == item.CategoryId);
                         existingDetail.Barcode = item.Barcode;
-                        existingDetail.BrandId = item.BrandId;
-                        existingDetail.CategoryId = item.CategoryId;
+                        existingDetail.BrandId = brand.Id;
+                        existingDetail.CategoryId = category.Id;
                         existingDetail.Quantity = item.Quantity;
                         existingDetail.StockCode = item.StockCode;
                         existingDetail.DimensionalWeight = item.DimensionalWeight;
@@ -184,6 +186,7 @@ namespace Pazaryeri.Repositories
                         existingDetail.ProductUrl = item.ProductUrl;
                         existingDetail.SaleStatus = item.SaleStatus;
                         existingDetail.ApprovalStatus = item.ApprovalStatus;
+
                     }
 
 

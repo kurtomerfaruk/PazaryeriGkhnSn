@@ -23,6 +23,23 @@
 
 <div class="card">
     <div class="card-body">
+        @* <form method="post" enctype="multipart/form-data" action="/Product/ImportExcel">
+            <div class="input-group mb-3">
+                <input type="file" name="file" class="form-control">
+                <button class="btn btn-secondary">Stok / Fiyat Güncelleme</button>
+            </div>
+        </form> *@
+        <form id="importExcelForm" method="post" enctype="multipart/form-data">
+            <div class="input-group mb-3">
+                <input type="file" name="file" id="excelFile" class="form-control" accept=".xlsx,.xls">
+                <button type="submit" class="btn btn-secondary" id="submitBtn">
+                    <span id="submitText">Stok / Fiyat Güncelleme</span>
+                    <div id="loadingSpinner" class="spinner-border spinner-border-sm d-none" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </button>
+            </div>
+        </form>
         <table id="productsTable" class="table table-striped table-bordered" style="width:100%">
             <thead>
                 <tr>
@@ -202,6 +219,7 @@
                                                         <tr><th>Barkod :</th><td>${item.barcode}</td></tr>
                                                         <tr><th>Marka :</th><td>${item.brand?.name}</td></tr>
                                                         <tr><th>Liste Fiyatı :</th><td>${item.listPrice}</td></tr>
+                                                        <tr><th>Onay Durumu:</th><td>${item.approveStatus ? 'Onaylı' :'Onaylı Değil'}</td></tr>
                                                     </table>
                                                 </div>
                                                 <div class="col-md-6">
@@ -209,6 +227,7 @@
                                                     <tr><th>Miktar:</th><td>${item.quantity}</td></tr>
                                                     <tr><th>Kategori:</th><td>${item.category?.title}</td></tr>
                                                     <tr><th>Satış Fiyatı:</th><td>${item.salePrice}</td></tr>
+                                                    <tr><th>Satış Durumu :</th><td>${item.saleStatus ? 'Satışta' :'Satışta Değil'}</td></tr>
                                                 </table>
                                                 </div>
                                             </div>
@@ -240,5 +259,87 @@
             });
         }
         });
+
+                document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('importExcelForm');
+            const fileInput = document.getElementById('excelFile');
+            const submitBtn = document.getElementById('submitBtn');
+            const submitText = document.getElementById('submitText');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                const file = fileInput.files[0];
+                if (!file) {
+                    toastr.warning('Lütfen bir Excel dosyası seçin');
+                    return;
+                }
+
+                const allowedTypes = ['application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
+                if (!allowedTypes.includes(file.type)) {
+                    toastr.warning('Lütfen geçerli bir Excel dosyası seçin (.xlsx, .xls).')
+                    return;
+                }
+
+                uploadFile(file);
+            });
+
+            function uploadFile(file) {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                setLoadingState(true);
+
+                fetch('/Product/ImportExcel', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(err => { throw err; });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    toastr.success('İşlem Başarıyla tamamlandı!')
+
+                    if (data.batchRequestId) {
+                        var message = `İşlem Detayları: \n
+                                        Batch ID:${batchRequestId}
+                                        İşlenen Ürün:${processedItems || 0} adet
+                                        `;
+                        toastr.success(message);
+                    }
+
+                    form.reset();
+                })
+                .catch(error => {
+                    console.error('Hata:', error);
+                    const errorMessage = error.message || 'Dosya yüklenirken bir hata oluştu.';
+                   
+                    toastr.error(errorMessage);
+                })
+                .finally(() => {
+                    setLoadingState(false);
+                });
+            }
+
+            function setLoadingState(isLoading) {
+                if (isLoading) {
+                    submitBtn.disabled = true;
+                    submitText.classList.add('d-none');
+                    loadingSpinner.classList.remove('d-none');
+                } else {
+                    submitBtn.disabled = false;
+                    submitText.classList.remove('d-none');
+                    loadingSpinner.classList.add('d-none');
+                }
+            }
+        });
+
     </script>
 }

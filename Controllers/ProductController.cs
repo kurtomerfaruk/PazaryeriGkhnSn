@@ -1,10 +1,15 @@
-﻿using DocumentFormat.OpenXml.InkML;
+﻿using Azure;
+using ClosedXML.Excel;
+using DocumentFormat.OpenXml.InkML;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Pazaryeri.Entity.Trendyol.Products;
+using Pazaryeri.Entity.Trendyol.Request;
+using Pazaryeri.Entity.Trendyol.Response;
 using Pazaryeri.Models;
 using Pazaryeri.Repositories.Interfaces;
 using Pazaryeri.Services;
+using System.Globalization;
 
 namespace Pazaryeri.Controllers
 {
@@ -128,21 +133,23 @@ namespace Pazaryeri.Controllers
                     {
                         id = product.Id,
                         title = product.Title,
-                        subtitle= product.Subtitle,
+                        subtitle = product.Subtitle,
                         description = product.Description,
                         platform = product.Platform.ToString(),
                     },
                     items = product.TrendyolDetails.Select(oi => new
                     {
-                        id=oi.Id,
+                        id = oi.Id,
                         barcode = oi.Barcode,
-                        quantity=oi.Quantity,
+                        quantity = oi.Quantity,
                         brand = oi.Brand,
-                        category=oi.Category,
-                        listPrice=oi.ListPrice.ToString("C2"),
-                        salePrice=oi.SalePrice.ToString("C2"),
+                        category = oi.Category,
+                        listPrice = oi.ListPrice.ToString("C2"),
+                        salePrice = oi.SalePrice.ToString("C2"),
+                        saleStatus = oi.SaleStatus,
+                        approveStatus = oi.ApprovalStatus,
                     }),
-                   
+
                 };
 
                 return Json(result);
@@ -151,6 +158,75 @@ namespace Pazaryeri.Controllers
             {
                 return Json(new { success = false, message = ex.Message });
             }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ImportExcel(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+            {
+                return BadRequest(new { message = "Lütfen bir dosya seçin." });
+            }
+
+            var allowedExtensions = new[] { ".xlsx", ".xls" };
+            var fileExtension = Path.GetExtension(file.FileName).ToLower();
+            if (!allowedExtensions.Contains(fileExtension))
+            {
+                return BadRequest(new { message = "Sadece Excel dosyaları (.xlsx, .xls) yükleyebilirsiniz." });
+            }
+
+            // Dosya boyutu kontrolü (max 5MB)
+            if (file.Length > 5 * 1024 * 1024)
+            {
+                return BadRequest(new { message = "Dosya boyutu 5MB'tan büyük olamaz." });
+            }
+
+
+            using var stream = file.OpenReadStream();
+            using var wb = new XLWorkbook(stream);
+            var ws = wb.Worksheet(1);
+
+            var stockPriceList = new List<StockPriceRequest>();
+
+            foreach (var row in ws.RowsUsed().Skip(1))
+            {
+                var raw = row.Cell(3).GetValue<string>();
+                decimal price = decimal.Parse(raw, new CultureInfo("tr-TR"));
+                var product = new StockPriceRequest
+                {
+                    barcode = row.Cell(1).GetValue<string>(),
+                    quantity = row.Cell(2).GetValue<int>(),
+                    listPrice = row.Cell(3).GetValue<decimal>(),
+                    salePrice = row.Cell(4).GetValue<decimal>(),
+                };
+                stockPriceList.Add(product);
+            }
+
+            if (!stockPriceList.Any())
+            {
+                return BadRequest(new { message = "Excel dosyasında işlenecek veri bulunamadı." });
+            }
+
+            var trendyolService = _platformServiceFactory.GetTrendyolService();
+            BatchRequestIdResponse result = await trendyolService.UpdateStockPrice(stockPriceList);
+
+            if (result != null)
+            {
+                StockPriceBatchResponse batchResponse = await trendyolService.UpdateStockPriceBatchResult(result.batchRequestId);
+                return Ok(new
+                {
+                    message = $"{stockPriceList.Count} ürün başarıyla güncellendi.",
+                    batchRequestId = batchResponse.batchRequestId,
+                    processedItems = stockPriceList.Count,
+                    batchItems = batchResponse.items
+                });
+            }
+
+            return Json(new
+            {
+                success = true,
+                message = $"Trendyol için  detay güncellendi."
+            });
         }
 
         private string GetPlatformDisplayName(Platform platform)
