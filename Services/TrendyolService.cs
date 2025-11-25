@@ -1,4 +1,6 @@
 ﻿using Newtonsoft.Json;
+using Pazaryeri.Entity.Trendyol;
+using Pazaryeri.Entity.Trendyol.Categories;
 using Pazaryeri.Entity.Trendyol.Orders;
 using Pazaryeri.Entity.Trendyol.Products;
 using Pazaryeri.Helper;
@@ -255,7 +257,7 @@ namespace Pazaryeri.Services
                     {
                         var products = response.Data.content.Select(CreateProductFromTrendyol).ToList();
                         allProducts.AddRange(products);
-
+                      
                         if (products.Count < size) break;
                     }
                     else
@@ -302,17 +304,17 @@ namespace Pazaryeri.Services
             List<TrendyolImage> images = trendyolProduct.images?
                                    .Select(item => new TrendyolImage
                                    {
-                                      Url = item.url
+                                       Url = item.url
                                    })
                                    .ToList() ?? new List<TrendyolImage>();
 
-            
+
             return new TrendyolProductDetail
             {
                 ProductMainId = trendyolProduct.productMainId,
                 Title = trendyolProduct.title,
                 Subtitle = subtitle,
-                Description= trendyolProduct.description,
+                Description = trendyolProduct.description,
                 Barcode = trendyolProduct.barcode,
                 TrenyolProductId = trendyolProduct.id,
                 BrandId = trendyolProduct.brandId,
@@ -327,9 +329,52 @@ namespace Pazaryeri.Services
                 ProductUrl = trendyolProduct.productUrl,
                 SaleStatus = trendyolProduct.onSale,
                 ApprovalStatus = trendyolProduct.approved,
-                Attributes =attributes,
+                Attributes = attributes,
                 Images = images,
             };
+        }
+
+        public async Task<List<TrendyolBrand>> GetBrandsAsync(string value)
+        {
+            try
+            {
+                var request = new RestRequest($"product/brands/by-name");
+                request.AddParameter("name", value);
+
+                var response = await _client.ExecuteAsync(request);
+                if (response.IsSuccessful && !string.IsNullOrEmpty(response.Content))
+                {
+                    return JsonConvert.DeserializeObject<List<TrendyolBrand>>(response.Content);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Trendyol marka sorgulanirken hata", ex.Message);
+            }
+
+            return new List<TrendyolBrand>();
+        }
+
+        public async Task<TrendyolCategories> GetCategoriesAsync()
+        {
+            try
+            {
+                var request = new RestRequest($"product/product-categories");
+
+                var response = await _client.ExecuteAsync(request);
+                if (response.IsSuccessful && !string.IsNullOrEmpty(response.Content))
+                {
+                    return JsonConvert.DeserializeObject<TrendyolCategories>(response.Content);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Trendyol kategori sorgulanirken hata", ex.Message);
+            }
+
+            return new TrendyolCategories();
         }
 
     }

@@ -4,14 +4,24 @@
             <li class=" nav-item">
                 <a href="index.html"><i class="la la-home"></i><span class="menu-title" data-i18n="nav.dash.main">Dashboard</span></a>
                 <ul class="menu-content">
-                    <li class="nav-item">
+                    <li class="nav-item @(ViewData["ActiveMenu"] as string == "Home" ? "active" : "")">
                         <a href="/Home/Index"><span class="menu-title" data-i18n="">Ana Sayfa</span></a>
+                    </li>
+                    <li class="nav-item @(ViewData["ActiveMenu"] as string == "Order" ? "active" : "")">
                         <a href="/Order/Index"><span class="menu-title" data-i18n="">Siparişler</span></a>
+                    </li>
+                    <li class="nav-item @(ViewData["ActiveMenu"] as string == "Product" ? "active" : "")">
                         <a href="/Product/Index"><span class="menu-title" data-i18n="">Ürünler</span></a>
+                    </li>
+                    <li class="nav-item @(ViewData["ActiveMenu"] as string == "Brand" ? "active" : "")">
+                        <a href="/Brand/Index"><span class="menu-title" data-i18n="">Markalar</span></a>
+                    </li>
+                    <li class="nav-item @(ViewData["ActiveMenu"] as string == "Category" ? "active" : "")">
+                        <a href="/Category/Index"><span class="menu-title" data-i18n="">Kategoriler</span></a>
                     </li>
                 </ul>
             </li>
-          
+
         </ul>
     </div>
 </div>

@@ -152,15 +152,19 @@ namespace Pazaryeri.Repositories
                 foreach (var item in group)
                 {
                     var existingDetail = existingProduct.TrendyolDetails
-                   .FirstOrDefault(d => d.TrenyolProductId == item.TrenyolProductId);
+                                .FirstOrDefault(d => d.TrenyolProductId == item.TrenyolProductId);
 
                     if (existingDetail == null)
                     {
-                        // Yeni detail ekle
-                        existingProduct.TrendyolDetails.Add(item);
+                        existingDetail = item;
+                        existingDetail.Brand = await _context.Brands.FirstOrDefaultAsync(b => b.BrandId == item.BrandId);
+                        existingDetail.Category = await _context.Categories.FirstOrDefaultAsync(c=>c.CategoryId==item.CategoryId);
+                        existingProduct.TrendyolDetails.Add(existingDetail);
                     }
                     else
                     {
+                        existingDetail.Brand = await _context.Brands.FirstOrDefaultAsync(b => b.BrandId == item.BrandId);
+                        existingDetail.Category = await _context.Categories.FirstOrDefaultAsync(c => c.CategoryId == item.CategoryId);
                         existingDetail.Barcode = item.Barcode;
                         existingDetail.BrandId = item.BrandId;
                         existingDetail.CategoryId = item.CategoryId;

@@ -36,6 +36,9 @@ namespace Pazaryeri.Migrations
                     b.Property<string>("Name")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("Platform")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.ToTable("Brands");
@@ -358,6 +361,10 @@ namespace Pazaryeri.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("BrandId");
+
+                    b.HasIndex("CategoryId");
+
                     b.HasIndex("ProductId");
 
                     b.ToTable("TrendyolProductDetails");
@@ -431,9 +438,25 @@ namespace Pazaryeri.Migrations
 
             modelBuilder.Entity("Pazaryeri.Models.TrendyolProductDetail", b =>
                 {
+                    b.HasOne("Pazaryeri.Models.Brand", "Brand")
+                        .WithMany()
+                        .HasForeignKey("BrandId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pazaryeri.Models.Category", "Category")
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Pazaryeri.Models.Product", "Product")
                         .WithMany("TrendyolDetails")
                         .HasForeignKey("ProductId");
+
+                    b.Navigation("Brand");
+
+                    b.Navigation("Category");
 
                     b.Navigation("Product");
                 });

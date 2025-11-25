@@ -6,7 +6,7 @@ using Pazaryeri.Services;
 
 namespace Pazaryeri.Controllers
 {
-    public class OrderController : Controller
+    public class OrderController : BaseController
     {
         private readonly IOrderRepository _orderRepository;
         private readonly IPlatformServiceFactory _platformServiceFactory;
@@ -25,6 +25,7 @@ namespace Pazaryeri.Controllers
         {
             var platforms = _platformServiceFactory.GetAvailablePlatforms();
             ViewBag.Platforms = platforms;
+            SetActiveMenu("Order");
             return View();
         }
 

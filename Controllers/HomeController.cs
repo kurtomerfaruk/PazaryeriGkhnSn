@@ -4,7 +4,7 @@ using Pazaryeri.Models;
 
 namespace Pazaryeri.Controllers
 {
-    public class HomeController : Controller
+    public class HomeController : BaseController
     {
         private readonly ILogger<HomeController> _logger;
 
@@ -15,6 +15,7 @@ namespace Pazaryeri.Controllers
 
         public IActionResult Index()
         {
+            SetActiveMenu("Home");
             return View();
         }
 

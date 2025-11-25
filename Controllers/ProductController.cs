@@ -8,7 +8,7 @@ using Pazaryeri.Services;
 
 namespace Pazaryeri.Controllers
 {
-    public class ProductController : Controller
+    public class ProductController : BaseController
     {
 
         private readonly IProductRepository _productRepository;
@@ -31,6 +31,7 @@ namespace Pazaryeri.Controllers
         }
         public IActionResult Index()
         {
+            SetActiveMenu("Product");
             var platforms = _platformServiceFactory.GetAvailablePlatforms();
             ViewBag.Platforms = platforms;
             return View();
@@ -135,6 +136,7 @@ namespace Pazaryeri.Controllers
                     {
                         id=oi.Id,
                         barcode = oi.Barcode,
+                        quantity=oi.Quantity
                     }),
                    
                 };

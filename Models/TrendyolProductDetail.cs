@@ -11,7 +11,9 @@ namespace Pazaryeri.Models
         public string ProductMainId { get; set; }
         public Product Product { get; set; }
         public int BrandId { get; set; }
+        public Brand Brand { get; set; }
         public int CategoryId { get; set; }
+        public Category Category { get; set; }
         public int Quantity { get; set; }
         public string StockCode { get; set; }
         public double DimensionalWeight { get; set; }
