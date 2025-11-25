@@ -148,7 +148,6 @@
                         if (response.success) {
                             showProductDetailsModal(response);
                         } else {
-                            console.log(response.message);
                             toastr.error(response.message);
                         }
                     })
@@ -158,9 +157,10 @@
             }
 
             function showProductDetailsModal(data) {
+                console.log(data);
             var modalHtml = `
                 <div class="modal fade" id="productDetailsModal" tabindex="-1">
-                    <div class="modal-dialog modal-lg">
+                    <div class="modal-dialog modal-xl">
                         <div class="modal-content">
                             <div class="modal-header">
                                 <h5 class="modal-title">Ürün Detayları - ${data.product.title}</h5>
@@ -200,11 +200,15 @@
                                                 <div class="col-md-6">
                                                     <table class="table table-sm">
                                                         <tr><th>Barkod :</th><td>${item.barcode}</td></tr>
+                                                        <tr><th>Marka :</th><td>${item.brand?.name}</td></tr>
+                                                        <tr><th>Liste Fiyatı :</th><td>${item.listPrice}</td></tr>
                                                     </table>
                                                 </div>
                                                 <div class="col-md-6">
                                                     <table class="table table-sm">
                                                     <tr><th>Miktar:</th><td>${item.quantity}</td></tr>
+                                                    <tr><th>Kategori:</th><td>${item.category?.title}</td></tr>
+                                                    <tr><th>Satış Fiyatı:</th><td>${item.salePrice}</td></tr>
                                                 </table>
                                                 </div>
                                             </div>

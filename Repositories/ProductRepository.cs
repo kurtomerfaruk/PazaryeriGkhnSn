@@ -89,7 +89,8 @@ namespace Pazaryeri.Repositories
         public async Task<Product> GetWithDetailsAsync(int id)
         {
             return await _context.Products
-            .Include(o => o.TrendyolDetails)
+            .Include(o => o.TrendyolDetails).ThenInclude(d => d.Brand)
+            .Include(o => o.TrendyolDetails).ThenInclude(d => d.Category)
             .FirstOrDefaultAsync(o => o.Id == id);
         }
 
@@ -158,7 +159,7 @@ namespace Pazaryeri.Repositories
                     {
                         existingDetail = item;
                         existingDetail.Brand = await _context.Brands.FirstOrDefaultAsync(b => b.BrandId == item.BrandId);
-                        existingDetail.Category = await _context.Categories.FirstOrDefaultAsync(c=>c.CategoryId==item.CategoryId);
+                        existingDetail.Category = await _context.Categories.FirstOrDefaultAsync(c => c.CategoryId == item.CategoryId);
                         existingProduct.TrendyolDetails.Add(existingDetail);
                     }
                     else

@@ -136,7 +136,11 @@ namespace Pazaryeri.Controllers
                     {
                         id=oi.Id,
                         barcode = oi.Barcode,
-                        quantity=oi.Quantity
+                        quantity=oi.Quantity,
+                        brand = oi.Brand,
+                        category=oi.Category,
+                        listPrice=oi.ListPrice.ToString("C2"),
+                        salePrice=oi.SalePrice.ToString("C2"),
                     }),
                    
                 };
