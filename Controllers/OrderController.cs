@@ -97,7 +97,7 @@ namespace Pazaryeri.Controllers
 
                     if (ord!=null)
                     {
-                        await _orderRepository.UpdateAsync(order);
+                        await _orderRepository.UpdateAsync(ord);
                         updatedCount++;
                     }
                     else

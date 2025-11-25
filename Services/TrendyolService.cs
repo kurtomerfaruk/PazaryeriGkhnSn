@@ -5,6 +5,7 @@ using Pazaryeri.Entity.Trendyol.Categories;
 using Pazaryeri.Entity.Trendyol.CategoryAttribute;
 using Pazaryeri.Entity.Trendyol.Orders;
 using Pazaryeri.Entity.Trendyol.Products;
+using Pazaryeri.Entity.Trendyol.Questions;
 using Pazaryeri.Entity.Trendyol.Request;
 using Pazaryeri.Entity.Trendyol.Response;
 using Pazaryeri.Helper;
@@ -411,6 +412,89 @@ namespace Pazaryeri.Services
             }
             return new TrendyolCategoryAttributes();
         }
+
+        public async Task<List<Question>> GetQuestionsAsync(int page = 0, int size = 50)
+        {
+            return await GetAlQuestionsRecursiveAsync(page, size);
+        }
+
+        private async Task<List<Question>> GetAlQuestionsRecursiveAsync(int page = 0, int size = 50)
+        {
+            var allQuestion = new List<Question>();
+            int currentPage = page;
+
+            do
+            {
+                try
+                {
+                    var request = new RestRequest($"qna/sellers/{_configuration["Trendyol:SupplierId"]}/questions/filter");
+                    request.AddParameter("page", currentPage);
+                    request.AddParameter("size", size);
+                    request.AddParameter("orderByField", "CreatedDate");
+                    request.AddParameter("orderByDirection", "DESC");
+
+                    var response = await _client.ExecuteAsync(request);
+
+                    if (response.IsSuccessful && !string.IsNullOrEmpty(response.Content))
+                    {
+                        var trendyolResponse = JsonConvert.DeserializeObject<TrendyolQuestions>(response.Content);
+
+                        if (trendyolResponse?.content != null && trendyolResponse.content.Any())
+                        {
+                            var questions = trendyolResponse.content.Select(CreateQuestionFromTrendyol).ToList();
+                            allQuestion.AddRange(questions);
+
+                            if (questions.Count < size) break;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        break;
+                    }
+
+                    currentPage++;
+                    await Task.Delay(100);
+
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Trendyol sayfa {Page} çekilirken hata", currentPage);
+                    break;
+                }
+
+            } while (currentPage < 1000);
+
+            return allQuestion;
+        }
+
+        private Question CreateQuestionFromTrendyol(QuestionContent question)
+        {
+            return new Question
+            {
+                QuestionId = question.id,
+                Answer = JsonConvert.SerializeObject(question.answer),
+                AnsweredDateMessage = question.answeredDateMessage,
+                CreationDate = Util.LongToDatetime(question.creationDate),
+                CustomerId= question.customerId,
+                ImageUrl = question.imageUrl,
+                ProductName = question.productName,
+                Public=question.@public,
+                ShowUserName=question.showUserName,
+                Status= Util.GetTrendyolQuestionStatus(question.status),
+                Text= question.text,
+                UserName= question.userName,
+                WebUrl= question.webUrl,
+                ProductMainId= question.productMainId,
+                Platform = Platform.Trendyol,
+               
+            };
+        }
+
+        
 
     }
 }

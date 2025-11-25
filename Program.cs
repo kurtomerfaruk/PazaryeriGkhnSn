@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Pazaryeri.Data;
-using Pazaryeri.Models;
 using Pazaryeri.Repositories;
 using Pazaryeri.Repositories.Interfaces;
 using Pazaryeri.Services;
@@ -15,12 +14,14 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
 
+
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<ITrendyolProductDetailRepository, TrendyolProductDetailRepository>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IBrandRepository, BrandRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<ICategoryAttributeRepository, CategoryAttributeRepository>();
+builder.Services.AddScoped<IQuestionRepository, QuestionRepository>();
 builder.Services.AddScoped<IPlatformServiceFactory, PlatformServiceFactory>();
 
 builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
