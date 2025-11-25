@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Pazaryeri.Entity.Trendyol.Products;
 using Pazaryeri.Models;
-using Pazaryeri.Repositories;
+using Pazaryeri.Repositories.Interfaces;
 using Pazaryeri.Services;
 
 namespace Pazaryeri.Controllers

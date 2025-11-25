@@ -75,6 +75,39 @@ namespace Pazaryeri.Migrations
                     b.ToTable("Categories");
                 });
 
+            modelBuilder.Entity("Pazaryeri.Models.CategoryAttribute", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AttributeId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AttributeName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AttributeValueId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AttributeValueName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Platform")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
+
+                    b.ToTable("CategoryAttributes");
+                });
+
             modelBuilder.Entity("Pazaryeri.Models.Order", b =>
                 {
                     b.Property<int>("Id")
@@ -397,6 +430,17 @@ namespace Pazaryeri.Migrations
                     b.HasIndex("TrendyolProductDetailId");
 
                     b.ToTable("TrendyolRejectReasonDetails");
+                });
+
+            modelBuilder.Entity("Pazaryeri.Models.CategoryAttribute", b =>
+                {
+                    b.HasOne("Pazaryeri.Models.Category", "Category")
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Category");
                 });
 
             modelBuilder.Entity("Pazaryeri.Models.TrendyolAttribute", b =>

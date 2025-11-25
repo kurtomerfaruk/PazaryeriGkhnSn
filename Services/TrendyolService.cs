@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Pazaryeri.Entity.Trendyol;
 using Pazaryeri.Entity.Trendyol.Categories;
+using Pazaryeri.Entity.Trendyol.CategoryAttribute;
 using Pazaryeri.Entity.Trendyol.Orders;
 using Pazaryeri.Entity.Trendyol.Products;
 using Pazaryeri.Helper;
@@ -375,6 +376,24 @@ namespace Pazaryeri.Services
             }
 
             return new TrendyolCategories();
+        }
+
+        public async Task<TrendyolCategoryAttributes> GetCategoryAttributesAsync(int categoryId)
+        {
+            try
+            {
+                var request = new RestRequest($"product/product-categories/{categoryId}/attributes");
+                var response = await _client.ExecuteAsync(request);
+                if (response.IsSuccessful & !string.IsNullOrEmpty(response.Content))
+                {
+                    return JsonConvert.DeserializeObject<TrendyolCategoryAttributes>(response.Content);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Trendyol Kategori Özellikleri sorgularken hata :", ex.Message);
+            }
+            return new TrendyolCategoryAttributes();
         }
 
     }

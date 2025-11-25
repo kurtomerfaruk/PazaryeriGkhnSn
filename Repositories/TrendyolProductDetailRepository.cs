@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Pazaryeri.Data;
 using Pazaryeri.Models;
+using Pazaryeri.Repositories.Interfaces;
 
 namespace Pazaryeri.Repositories
 {

@@ -1,8 +1,10 @@
 ﻿using Azure.Core;
 using Microsoft.AspNetCore.Mvc;
 using Pazaryeri.Entity.Trendyol.Categories;
+using Pazaryeri.Entity.Trendyol.CategoryAttribute;
 using Pazaryeri.Models;
 using Pazaryeri.Repositories;
+using Pazaryeri.Repositories.Interfaces;
 using Pazaryeri.Services;
 
 namespace Pazaryeri.Controllers
@@ -10,16 +12,19 @@ namespace Pazaryeri.Controllers
     public class CategoryController : BaseController
     {
         private readonly ICategoryRepository _categoryRepository;
+        private readonly ICategoryAttributeRepository _categoryAttributeRepository;
         private readonly ILogger<CategoryController> _logger;
         private readonly IConfiguration _configuration;
         private readonly IPlatformServiceFactory _platformServiceFactory;
 
         public CategoryController(ICategoryRepository categoryRepository,
             IPlatformServiceFactory platformServiceFactory,
+            ICategoryAttributeRepository categoryAttributeRepository,
             ILogger<CategoryController> logger,
             IConfiguration configuration)
         {
             _categoryRepository = categoryRepository;
+            _categoryAttributeRepository = categoryAttributeRepository;
             _logger = logger;
             _configuration = configuration;
             _platformServiceFactory = platformServiceFactory;
@@ -139,6 +144,36 @@ namespace Pazaryeri.Controllers
             }
         }
 
+        [HttpPost]
+        public async Task<IActionResult> FetchTrendyolCategoryAttributes(int categoryId)
+        {
+            try
+            {
+                var trendyolService = _platformServiceFactory.GetTrendyolService();
+                TrendyolCategoryAttributes attributes = await trendyolService.GetCategoryAttributesAsync(categoryId);
+
+
+                var categoryAttributes = ConvertToCategoryAttributes(categoryId, attributes);
+
+                await _categoryAttributeRepository.AddOrUpdateRangeAsync(categoryAttributes);
+                await _categoryAttributeRepository.SaveChangesAsync();
+
+                return Json(new
+                {
+                    success = true,
+                    message = $"Trendyol kategori özellikleri güncellendi."
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = $"Trendyol kategoriler çekilirken hata: {ex.Message}"
+                });
+            }
+        }
+
         private string GetCategoryFullPath(TrendyolCategory category, List<TrendyolCategory> allCategories)
         {
             var pathParts = new List<string> { category.name };
@@ -171,6 +206,44 @@ namespace Pazaryeri.Controllers
                 if (category.subCategories != null && category.subCategories.Any())
                 {
                     result.AddRange(FlattenCategoriesRecursive(category.subCategories));
+                }
+            }
+
+            return result;
+        }
+
+        private List<Models.CategoryAttribute> ConvertToCategoryAttributes(int categoryId, TrendyolCategoryAttributes attributes)
+        {
+            var result = new List<Models.CategoryAttribute>();
+
+            foreach (var attribute in attributes.categoryAttributes)
+            {
+                var mainAttribute = new Models.CategoryAttribute
+                {
+                    CategoryId = categoryId,
+                    AttributeId = attribute.attribute.id.ToString(),
+                    AttributeName = attribute.attribute.name?.Trim(),
+                    AttributeValueId = null,
+                    AttributeValueName = null,
+                    Platform = Platform.Trendyol
+                };
+                result.Add(mainAttribute);
+
+                if (attribute.attributeValues != null && attribute.attributeValues.Any())
+                {
+                    foreach (var value in attribute.attributeValues)
+                    {
+                        var valueAttribute = new Models.CategoryAttribute
+                        {
+                            CategoryId = categoryId,
+                            AttributeId = attribute.attribute.id.ToString(),
+                            AttributeName = attribute.attribute.name?.Trim(),
+                            AttributeValueId = value.id.ToString(),
+                            AttributeValueName = value.name?.Trim(),
+                            Platform = Platform.Trendyol
+                        };
+                        result.Add(valueAttribute);
+                    }
                 }
             }
 

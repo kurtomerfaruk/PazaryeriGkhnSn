@@ -4,6 +4,7 @@ using Pazaryeri.Data;
 using Pazaryeri.Entity.Trendyol;
 using Pazaryeri.Helper;
 using Pazaryeri.Models;
+using Pazaryeri.Repositories.Interfaces;
 using System.Linq.Expressions;
 
 namespace Pazaryeri.Repositories

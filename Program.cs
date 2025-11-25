@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Pazaryeri.Data;
 using Pazaryeri.Models;
 using Pazaryeri.Repositories;
+using Pazaryeri.Repositories.Interfaces;
 using Pazaryeri.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -19,6 +20,7 @@ builder.Services.AddScoped<ITrendyolProductDetailRepository, TrendyolProductDeta
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IBrandRepository, BrandRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<ICategoryAttributeRepository, CategoryAttributeRepository>();
 builder.Services.AddScoped<IPlatformServiceFactory, PlatformServiceFactory>();
 
 builder.Services.AddSingleton<IConfiguration>(builder.Configuration);

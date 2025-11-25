@@ -1,4 +1,4 @@
-﻿@{
+﻿﻿@{
     ViewData["Title"] = "Kategoriler";
 }
 
@@ -33,13 +33,13 @@
                     <th>Kategori</th>
                     <th>Üst Kategori Id</th>
                     <th>Üst Kategori mi?</th>
+                    <th>İşlemler</th>
                 </tr>
             </thead>
         </table>
     </div>
 </div>
-<div class="modal fade text-left" id="updateBrand" tabindex="-1" role="dialog" aria-labelledby="myModalLabel1"
-     aria-hidden="true">
+<div class="modal fade text-left" id="updateBrand" tabindex="-1" role="dialog" aria-labelledby="myModalLabel1" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -91,26 +91,36 @@
             var table = $('#categoryTable').DataTable({
                 processing: true,
                 serverSide: true,
-                    dom: 'Bfrtip',
-                    buttons: [
-                        'excelHtml5',
-                        'pdfHtml5'
-                    ],
+                dom: 'Bfrtip',
+                buttons: [
+                    'excelHtml5',
+                    'pdfHtml5'
+                ],
                 ajax: {
                     url: '@Url.Action("GetCategories")',
                     type: 'POST'
                 },
-                 drawCallback: function (settings, json) {
+                drawCallback: function (settings, json) {
                     $('[data-toggle="tooltip"]').tooltip();
                 },
                 columns: [
-                    { data: 'id',name:'id' },
-                    { data: 'platform',name:'platform' },
-                    { data: 'categoryId',name:'categoryId' },
-                    { data: 'categoryCode' ,name:'categoryCode'},
-                    { data: 'title' ,name:'title'},
-                    { data: 'parentCategoryId' ,name:'parentCategoryId'},
-                    { data: 'topCategory' ,name:'topCategory'},
+                    { data: 'id', name: 'id' },
+                    { data: 'platform', name: 'platform' },
+                    { data: 'categoryId', name: 'categoryId' },
+                    { data: 'categoryCode', name: 'categoryCode' },
+                    { data: 'title', name: 'title' },
+                    { data: 'parentCategoryId', name: 'parentCategoryId' },
+                    { data: 'topCategory', name: 'topCategory' },
+                    {
+                        data: 'actions',
+                        render: function (data, type, row) {
+                            return `<button class="btn btn-sm btn-info update-attribute" data-id="${row.id}" data-toggle="tooltip" title="Detay">
+                                <i class="la la-eye"></i>
+                                </button>`;
+
+                        },
+                        orderable: false
+                    },
                 ],
                 order: [[0, 'desc']],
                 language: {
@@ -118,16 +128,53 @@
                 }
             });
 
-             $('.fetch-platform').click(function (e) {
+            $('.fetch-platform').click(function (e) {
                 e.preventDefault();
                 var platform = $(this).data('platform');
                 var $btn = $('.btn-primary.dropdown-toggle');
 
                 $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Çekiliyor...');
 
-                var url =  '@Url.Action("FetchTrendyolCategories")';
+                var url = '@Url.Action("FetchTrendyolCategories")';
 
                 var data = platform === 'all' ? {} : { platform: platform };
+
+                $.post(url, data)
+                    .done(function (response) {
+                        if (response.success) {
+                            table.ajax.reload();
+                            if (platform === 'all' && response.details) {
+                                var details = response.details.map(d =>
+                                    `${d.platform}: ${d.added}/${d.total} sipariş`
+                                ).join('\n');
+                                toastr.success(response.message + '\n' + details);
+                            } else {
+                                toastr.success(response.message);
+                            }
+                        } else {
+                            toastr.error(response.message);
+                        }
+                    })
+                    .fail(function () {
+                        toastr.error('Kategoriler çekilirken hata oluştu.');
+                    })
+                    .always(function () {
+                        $btn.prop('disabled', false).html('<i class="fas fa-sync"></i> Kategorileri Çek');
+                    });
+            });
+
+            $('#categoryTable').on('click', '.update-attribute', function (e) {
+                console.log("deneme");
+                e.preventDefault();
+                var platform = $(this).data('platform');
+                var $btn = $(this);
+                var categoryId = $(this).data('id');
+
+                $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Çekiliyor...');
+
+                var url = '@Url.Action("FetchTrendyolCategoryAttributes")';
+
+                var data = { categoryId: categoryId };
 
                 $.post(url, data)
                     .done(function (response) {

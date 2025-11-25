@@ -19,6 +19,9 @@
                     <li class="nav-item @(ViewData["ActiveMenu"] as string == "Category" ? "active" : "")">
                         <a href="/Category/Index"><span class="menu-title" data-i18n="">Kategoriler</span></a>
                     </li>
+                    <li class="nav-item @(ViewData["ActiveMenu"] as string == "CategoryAttribute" ? "active" : "")">
+                        <a href="/CategoryAttribute/Index"><span class="menu-title" data-i18n="">Kategori Özellikleri</span></a>
+                    </li>
                 </ul>
             </li>
 

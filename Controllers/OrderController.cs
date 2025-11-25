@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Pazaryeri.Helper;
 using Pazaryeri.Models;
-using Pazaryeri.Repositories;
+using Pazaryeri.Repositories.Interfaces;
 using Pazaryeri.Services;
 
 namespace Pazaryeri.Controllers
