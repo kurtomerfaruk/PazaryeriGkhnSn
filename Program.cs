@@ -22,6 +22,7 @@ builder.Services.AddScoped<IBrandRepository, BrandRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<ICategoryAttributeRepository, CategoryAttributeRepository>();
 builder.Services.AddScoped<IQuestionRepository, QuestionRepository>();
+builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 builder.Services.AddScoped<IPlatformServiceFactory, PlatformServiceFactory>();
 
 builder.Services.AddSingleton<IConfiguration>(builder.Configuration);

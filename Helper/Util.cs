@@ -7,6 +7,16 @@
             return DateTimeOffset.FromUnixTimeMilliseconds(value).UtcDateTime;
         }
 
+        public static DateTime? LongToDatetime(long? value)
+        {
+            return value.HasValue ? LongToDatetime(value.Value) : (DateTime?)null;
+        }
+
+        public static long DateTimeToLong(DateTime dateTime)
+        {
+            return new DateTimeOffset(dateTime).ToUnixTimeMilliseconds();
+        }
+
         public static string GetTrendyolQuestionStatus(string trendyolStatus)
         {
             return trendyolStatus switch

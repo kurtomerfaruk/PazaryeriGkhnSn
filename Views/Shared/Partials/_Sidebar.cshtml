@@ -25,6 +25,9 @@
                     <li class="nav-item @(ViewData["ActiveMenu"] as string == "Question" ? "active" : "")">
                         <a href="/Question/Index"><span class="menu-title" data-i18n="">Sorular</span></a>
                     </li>
+                    <li class="nav-item @(ViewData["ActiveMenu"] as string == "Transaction" ? "active" : "")">
+                        <a href="/Transaction/Index"><span class="menu-title" data-i18n="">Muhasebe Kayıtları</span></a>
+                    </li>
                 </ul>
             </li>
 

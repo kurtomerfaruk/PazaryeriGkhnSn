@@ -3,28 +3,20 @@
   "WorkspaceRootPath": "D:\\Destek\\Projeler\\G\u00F6khan Esen\\Pazaryeri\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{3E87901C-2ED9-43CA-A2F2-061D1CF6E91E}|Pazaryeri.csproj|d:\\destek\\projeler\\g\u00F6khan esen\\pazaryeri\\views\\question\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
-      "RelativeMoniker": "D:0:0:{3E87901C-2ED9-43CA-A2F2-061D1CF6E91E}|Pazaryeri.csproj|solutionrelative:views\\question\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{3E87901C-2ED9-43CA-A2F2-061D1CF6E91E}|Pazaryeri.csproj|d:\\destek\\projeler\\g\u00F6khan esen\\pazaryeri\\services\\trendyolservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{3E87901C-2ED9-43CA-A2F2-061D1CF6E91E}|Pazaryeri.csproj|solutionrelative:services\\trendyolservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{3E87901C-2ED9-43CA-A2F2-061D1CF6E91E}|Pazaryeri.csproj|d:\\destek\\projeler\\g\u00F6khan esen\\pazaryeri\\controllers\\questioncontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{3E87901C-2ED9-43CA-A2F2-061D1CF6E91E}|Pazaryeri.csproj|solutionrelative:controllers\\questioncontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{3E87901C-2ED9-43CA-A2F2-061D1CF6E91E}|Pazaryeri.csproj|d:\\destek\\projeler\\g\u00F6khan esen\\pazaryeri\\controllers\\transactioncontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{3E87901C-2ED9-43CA-A2F2-061D1CF6E91E}|Pazaryeri.csproj|solutionrelative:controllers\\transactioncontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{3E87901C-2ED9-43CA-A2F2-061D1CF6E91E}|Pazaryeri.csproj|d:\\destek\\projeler\\g\u00F6khan esen\\pazaryeri\\helper\\util.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{3E87901C-2ED9-43CA-A2F2-061D1CF6E91E}|Pazaryeri.csproj|solutionrelative:helper\\util.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{3E87901C-2ED9-43CA-A2F2-061D1CF6E91E}|Pazaryeri.csproj|d:\\destek\\projeler\\g\u00F6khan esen\\pazaryeri\\views\\transaction\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{3E87901C-2ED9-43CA-A2F2-061D1CF6E91E}|Pazaryeri.csproj|solutionrelative:views\\transaction\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{3E87901C-2ED9-43CA-A2F2-061D1CF6E91E}|Pazaryeri.csproj|d:\\destek\\projeler\\g\u00F6khan esen\\pazaryeri\\controllers\\ordercontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{3E87901C-2ED9-43CA-A2F2-061D1CF6E91E}|Pazaryeri.csproj|solutionrelative:controllers\\ordercontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{3E87901C-2ED9-43CA-A2F2-061D1CF6E91E}|Pazaryeri.csproj|d:\\destek\\projeler\\g\u00F6khan esen\\pazaryeri\\views\\order\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
-      "RelativeMoniker": "D:0:0:{3E87901C-2ED9-43CA-A2F2-061D1CF6E91E}|Pazaryeri.csproj|solutionrelative:views\\order\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
     }
   ],
   "DocumentGroupContainers": [
@@ -34,84 +26,58 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 4,
+          "SelectedChildIndex": 0,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 0,
               "Title": "TrendyolService.cs",
               "DocumentMoniker": "D:\\Destek\\Projeler\\G\u00F6khan Esen\\Pazaryeri\\Services\\TrendyolService.cs",
               "RelativeDocumentMoniker": "Services\\TrendyolService.cs",
               "ToolTip": "D:\\Destek\\Projeler\\G\u00F6khan Esen\\Pazaryeri\\Services\\TrendyolService.cs",
               "RelativeToolTip": "Services\\TrendyolService.cs",
-              "ViewState": "AgIAANsBAAAAAAAAAAAQwPwBAAASAAAAAAAAAA==",
+              "ViewState": "AgIAABYCAAAAAAAAAAAgwCYCAABEAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-11-26T08:52:28.899Z",
+              "WhenOpened": "2025-11-26T11:40:36.486Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 3,
-              "Title": "Util.cs",
-              "DocumentMoniker": "D:\\Destek\\Projeler\\G\u00F6khan Esen\\Pazaryeri\\Helper\\Util.cs",
-              "RelativeDocumentMoniker": "Helper\\Util.cs",
-              "ToolTip": "D:\\Destek\\Projeler\\G\u00F6khan Esen\\Pazaryeri\\Helper\\Util.cs",
-              "RelativeToolTip": "Helper\\Util.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAA5AAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-11-26T08:29:17.91Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "QuestionController.cs",
-              "DocumentMoniker": "D:\\Destek\\Projeler\\G\u00F6khan Esen\\Pazaryeri\\Controllers\\QuestionController.cs",
-              "RelativeDocumentMoniker": "Controllers\\QuestionController.cs",
-              "ToolTip": "D:\\Destek\\Projeler\\G\u00F6khan Esen\\Pazaryeri\\Controllers\\QuestionController.cs",
-              "RelativeToolTip": "Controllers\\QuestionController.cs",
-              "ViewState": "AgIAAHkAAAAAAAAAAAAiwKgAAAAtAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-11-26T07:30:04.781Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 4,
               "Title": "OrderController.cs",
               "DocumentMoniker": "D:\\Destek\\Projeler\\G\u00F6khan Esen\\Pazaryeri\\Controllers\\OrderController.cs",
               "RelativeDocumentMoniker": "Controllers\\OrderController.cs",
               "ToolTip": "D:\\Destek\\Projeler\\G\u00F6khan Esen\\Pazaryeri\\Controllers\\OrderController.cs",
               "RelativeToolTip": "Controllers\\OrderController.cs",
-              "ViewState": "AgIAAIEAAAAAAAAAAAAAwJQAAABRAAAAAAAAAA==",
+              "ViewState": "AgIAAIEAAAAAAAAAAAAmwJQAAABRAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-11-26T07:29:54.603Z",
+              "WhenOpened": "2025-11-26T11:38:44.186Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 2,
               "Title": "Index.cshtml",
-              "DocumentMoniker": "D:\\Destek\\Projeler\\G\u00F6khan Esen\\Pazaryeri\\Views\\Question\\Index.cshtml",
-              "RelativeDocumentMoniker": "Views\\Question\\Index.cshtml",
-              "ToolTip": "D:\\Destek\\Projeler\\G\u00F6khan Esen\\Pazaryeri\\Views\\Question\\Index.cshtml",
-              "RelativeToolTip": "Views\\Question\\Index.cshtml",
-              "ViewState": "AgIAAEwAAAAAAAAAAAAqwGIAAABeAAAAAAAAAA==",
+              "DocumentMoniker": "D:\\Destek\\Projeler\\G\u00F6khan Esen\\Pazaryeri\\Views\\Transaction\\Index.cshtml",
+              "RelativeDocumentMoniker": "Views\\Transaction\\Index.cshtml",
+              "ToolTip": "D:\\Destek\\Projeler\\G\u00F6khan Esen\\Pazaryeri\\Views\\Transaction\\Index.cshtml",
+              "RelativeToolTip": "Views\\Transaction\\Index.cshtml",
+              "ViewState": "AgIAAAwAAAAAAAAAAAAAAB8AAAAiAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
-              "WhenOpened": "2025-11-26T07:28:12.315Z",
+              "WhenOpened": "2025-11-26T11:18:40.699Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
-              "Title": "Index.cshtml",
-              "DocumentMoniker": "D:\\Destek\\Projeler\\G\u00F6khan Esen\\Pazaryeri\\Views\\Order\\Index.cshtml",
-              "RelativeDocumentMoniker": "Views\\Order\\Index.cshtml",
-              "ToolTip": "D:\\Destek\\Projeler\\G\u00F6khan Esen\\Pazaryeri\\Views\\Order\\Index.cshtml",
-              "RelativeToolTip": "Views\\Order\\Index.cshtml",
-              "ViewState": "AgIAAL4AAAAAAAAAAAAAANQAAAAyAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
-              "WhenOpened": "2025-11-26T07:28:07.499Z",
+              "DocumentIndex": 1,
+              "Title": "TransactionController.cs",
+              "DocumentMoniker": "D:\\Destek\\Projeler\\G\u00F6khan Esen\\Pazaryeri\\Controllers\\TransactionController.cs",
+              "RelativeDocumentMoniker": "Controllers\\TransactionController.cs",
+              "ToolTip": "D:\\Destek\\Projeler\\G\u00F6khan Esen\\Pazaryeri\\Controllers\\TransactionController.cs",
+              "RelativeToolTip": "Controllers\\TransactionController.cs",
+              "ViewState": "AgIAAC4AAAAAAAAAAAAgwD8AAAA4AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-26T10:21:20.465Z",
               "EditorCaption": ""
             }
           ]

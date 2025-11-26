@@ -1,5 +1,8 @@
 ﻿using DocumentFormat.OpenXml.Office2010.ExcelAc;
 using DocumentFormat.OpenXml.Spreadsheet;
+using DocumentFormat.OpenXml.VariantTypes;
+using DocumentFormat.OpenXml.Wordprocessing;
+using Microsoft.Identity.Client.Extensions.Msal;
 using Newtonsoft.Json;
 using Pazaryeri.Entity.Trendyol;
 using Pazaryeri.Entity.Trendyol.Categories;
@@ -9,12 +12,15 @@ using Pazaryeri.Entity.Trendyol.Products;
 using Pazaryeri.Entity.Trendyol.Questions;
 using Pazaryeri.Entity.Trendyol.Request;
 using Pazaryeri.Entity.Trendyol.Response;
+using Pazaryeri.Entity.Trendyol.Transaction;
 using Pazaryeri.Helper;
 using Pazaryeri.Models;
 using RestSharp;
 using System.Collections.Generic;
+using System.Diagnostics.Metrics;
 using System.Net;
 using System.Net.Http;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 
 namespace Pazaryeri.Services
@@ -520,6 +526,132 @@ namespace Pazaryeri.Services
                 _logger.LogError(ex, "Trendyol stok fiyat guncellenirken hata olustu");
                 return HttpStatusCode.BadRequest;
             }
+        }
+
+        public async Task<List<Transaction>> GetTransactionsAsync(int page = 0, int size = 1000)
+        {
+            return await GetAllransactionsRecursiveAsync(page, size);
+        }
+
+        private async Task<List<Transaction>> GetAllransactionsRecursiveAsync(int page = 0, int size = 1000)
+        {
+            var allTransactions = new List<Transaction>();
+            int currentPage = page;
+            var transactionTypes = new List<string> { "PaymentOrder", "Stoppage", "CashAdvance" };
+
+            foreach (var type in transactionTypes)
+            {
+                do
+                {
+                    try
+                    {
+                        var request = new RestRequest($"finance/che/sellers/{_configuration["Trendyol:SupplierId"]}/otherfinancials");
+                        request.AddParameter("page", currentPage);
+                        request.AddParameter("size", size);
+                        request.AddParameter("transactionType", type);
+                        request.AddParameter("startDate", Util.DateTimeToLong(DateTime.Now.AddDays(-14)));
+                        request.AddParameter("endDate", Util.DateTimeToLong(DateTime.Now));
+
+                        var response = await _client.ExecuteAsync(request);
+
+                        if (response.IsSuccessful && !string.IsNullOrEmpty(response.Content))
+                        {
+                            var trendyolResponse = JsonConvert.DeserializeObject<TrendyolTransactions>(response.Content);
+
+                            if (trendyolResponse?.content != null && trendyolResponse.content.Any())
+                            {
+                                var orders = trendyolResponse.content.Select(CreateTransactionFromTrendyol).ToList();
+                                allTransactions.AddRange(orders);
+
+                                if (orders.Count < size) break;
+                            }
+                            else
+                            {
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            break;
+                        }
+
+                        currentPage++;
+                        await Task.Delay(100);
+
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Trendyol sayfa {Page} çekilirken hata", currentPage);
+                        break;
+                    }
+
+                } while (currentPage < 1000);
+
+            }
+
+            return allTransactions;
+        }
+
+        private Transaction CreateTransactionFromTrendyol(TransactionContent content)
+        {
+            Transaction transaction = new Transaction();
+            transaction.TransactionId = content.id;
+            transaction.TransactionDate = Util.LongToDatetime(content.transactionDate);
+            transaction.Barcode = content.barcode;
+            transaction.TransactionType = content.transactionType;
+            transaction.ReceiptId = content.receiptId;
+            transaction.Description = content.description;
+            transaction.Debt = decimal.Parse(content.debt.ToString());
+            transaction.Credit = decimal.Parse(content.credit.ToString());
+            transaction.PaymentPeriod = content.paymentPeriod;
+            transaction.CommissionRate = content.commissionRate != null ? decimal.Parse(content.commissionRate.ToString()) : decimal.Parse("0");
+            transaction.CommissionAmount = content.commissionAmount != null ? decimal.Parse(content.commissionAmount.ToString()) : decimal.Parse("0");
+            transaction.CommissionInvoiceSerialNumber = content.commissionInvoiceSerialNumber;
+            transaction.SellerRevenue = content.sellerRevenue != null ? decimal.Parse(content.sellerRevenue.ToString()) : decimal.Parse("0");
+            transaction.OrderNumber = content.orderNumber;
+            transaction.OrderDate = Util.LongToDatetime(content.orderDate);
+            transaction.PaymentOrderId = content.paymentOrderId;
+            transaction.PaymentDate = Util.LongToDatetime(content.paymentDate);
+            transaction.SellerId = content.sellerId;
+            transaction.StoreId = content.storeId;
+            transaction.StoreName = content.storeName;
+            transaction.StoreAddress = content.storeAddress;
+            transaction.Country = content.country;
+            transaction.Currency = content.currency;
+            transaction.Affiliate = content.affiliate;
+            transaction.ShipmentPackageId = content.shipmentPackageId;
+            transaction.Platform = Platform.Trendyol;
+            return transaction;
+            //return new Transaction
+            //{
+            //    TransactionId = content.id,
+            //    TransactionDate = Util.LongToDatetime(content.transactionDate),
+            //    Barcode = content.barcode,
+            //    TransactionType = content.transactionType,
+            //    ReceiptId = content.receiptId,
+            //    Description = content.description,
+            //    Debt = decimal.Parse(content.debt.ToString()),
+            //    Credit = decimal.Parse(content.credit.ToString()),
+            //    PaymentPeriod = content.paymentPeriod,
+            //    CommissionRate = decimal.Parse(content.commissionRate.ToString()),
+            //    CommissionAmount = decimal.Parse(content.commissionAmount.ToString()),
+            //    CommissionInvoiceSerialNumber = content.commissionInvoiceSerialNumber,
+            //    SellerRevenue = decimal.Parse(content.sellerRevenue.ToString()),
+            //    OrderNumber = content.orderNumber,
+            //    OrderDate = Util.LongToDatetime(content.orderDate),
+            //    PaymentOrderId = content.paymentOrderId,
+            //    PaymentDate = Util.LongToDatetime(content.paymentDate),
+            //    SellerId = content.sellerId,
+            //    StoreId = content.storeId,
+            //    StoreName = content.storeName,
+            //    StoreAddress = content.storeAddress,
+            //    Country = content.country,
+            //    Currency = content.currency,
+            //    Affiliate = content.affiliate,
+            //    ShipmentPackageId = content.shipmentPackageId,
+            //    Platform = Platform.Trendyol
+
+            //};
         }
     }
 }
