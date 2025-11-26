@@ -1,4 +1,5 @@
-﻿using DocumentFormat.OpenXml.Spreadsheet;
+﻿using DocumentFormat.OpenXml.Office2010.ExcelAc;
+using DocumentFormat.OpenXml.Spreadsheet;
 using Newtonsoft.Json;
 using Pazaryeri.Entity.Trendyol;
 using Pazaryeri.Entity.Trendyol.Categories;
@@ -12,6 +13,7 @@ using Pazaryeri.Helper;
 using Pazaryeri.Models;
 using RestSharp;
 using System.Collections.Generic;
+using System.Net;
 using System.Net.Http;
 using System.Text;
 
@@ -275,7 +277,7 @@ namespace Pazaryeri.Services
                     {
                         var products = response.Data.content.Select(CreateProductFromTrendyol).ToList();
                         allProducts.AddRange(products);
-                      
+
                         if (products.Count < size) break;
                     }
                     else
@@ -480,22 +482,44 @@ namespace Pazaryeri.Services
                 Answer = JsonConvert.SerializeObject(question.answer),
                 AnsweredDateMessage = question.answeredDateMessage,
                 CreationDate = Util.LongToDatetime(question.creationDate),
-                CustomerId= question.customerId,
+                CustomerId = question.customerId,
                 ImageUrl = question.imageUrl,
                 ProductName = question.productName,
-                Public=question.@public,
-                ShowUserName=question.showUserName,
-                Status= Util.GetTrendyolQuestionStatus(question.status),
-                Text= question.text,
-                UserName= question.userName,
-                WebUrl= question.webUrl,
-                ProductMainId= question.productMainId,
+                Public = question.@public,
+                ShowUserName = question.showUserName,
+                Status = Util.GetTrendyolQuestionStatus(question.status),
+                Text = question.text,
+                UserName = question.userName,
+                WebUrl = question.webUrl,
+                ProductMainId = question.productMainId,
                 Platform = Platform.Trendyol,
-               
+
             };
         }
 
-        
+        public async Task<HttpStatusCode> ReplyQuestion(int questionId, string answer)
+        {
+            try
+            {
+                var request = new RestRequest($"qna/sellers/{_configuration["Trendyol:SupplierId"]}/questions/{questionId}/answers", Method.Post);
 
+                var param = new
+                {
+                    text = answer
+                };
+
+                var json = JsonConvert.SerializeObject(param);
+
+                request.AddJsonBody(json);
+
+                var response = await _client.ExecuteAsync(request);
+                return response.StatusCode;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Trendyol stok fiyat guncellenirken hata olustu");
+                return HttpStatusCode.BadRequest;
+            }
+        }
     }
 }

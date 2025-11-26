@@ -1,11 +1,14 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using DocumentFormat.OpenXml.Drawing.Charts;
+using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Pazaryeri.Entity.Trendyol.Categories;
+using Pazaryeri.Entity.Trendyol.Questions;
 using Pazaryeri.Helper;
 using Pazaryeri.Models;
 using Pazaryeri.Repositories;
 using Pazaryeri.Repositories.Interfaces;
 using Pazaryeri.Services;
+using System.Net;
 
 namespace Pazaryeri.Controllers
 {
@@ -62,7 +65,7 @@ namespace Pazaryeri.Controllers
                         id = o.Id,
                         platform = GetPlatformDisplayName(o.Platform),
                         text = o.Text,
-                        status=o.Status,
+                        status = o.Status,
                         creationDate = o.CreationDate.ToString("dd.MM.yyyy HH:mm"),
                         actions = o.Id
                     })
@@ -119,6 +122,61 @@ namespace Pazaryeri.Controllers
                     success = false,
                     message = $"Trendyol sorular çekilirken hata: {ex.Message}"
                 });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetQuestionDetails(int id)
+        {
+            try
+            {
+                var question = await _questionRepository.GetByIdAsync(id);
+                if (question == null)
+                {
+                    return Json(new { success = false, message = "Soru bulunamadı" });
+                }
+
+                var result = new
+                {
+                    success = true,
+                    question = new
+                    {
+                        id = question.Id,
+                        questionId = question.QuestionId,
+                        creationDate = question.CreationDate.ToString("dd.MM.yyyy HH:mm"),
+                        answeredDateMessage = question.AnsweredDateMessage,
+                        productName = question.ProductName,
+                        status = question.Status,
+                        text = question.Text,
+                        answer = JsonConvert.DeserializeObject<Answer>(question.Answer)
+                    }
+                };
+
+                return Json(result);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Reply(int questionId,string answer)
+        {
+            try
+            {
+                var trendyolService = _platformServiceFactory.GetTrendyolService();
+                HttpStatusCode result = await trendyolService.ReplyQuestion(questionId, answer);
+                return Json(new
+                {
+                    success = true,
+                    message = $"Soru başarıyla cevaplandı"
+                });
+            }
+            catch (Exception ex)
+            {
+
+                return Json(new { success = false, message = ex.Message });
             }
         }
 

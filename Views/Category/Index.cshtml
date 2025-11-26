@@ -39,33 +39,6 @@
         </table>
     </div>
 </div>
-<div class="modal fade text-left" id="updateBrand" tabindex="-1" role="dialog" aria-labelledby="myModalLabel1" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4 class="modal-title" id="myModalLabel1">Markaları Getir</h4>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="text-center mb-4">
-                    <p class="text-muted">Arama yapmak istediğiniz markayı yazıp Arama Yap butonuna basın</p>
-                </div>
-                <div class="col-md-12">
-                    <label class="form-label">Arama Yapılacak Marka</label>
-                    <input type="text" id="brandName" class="form-control" />
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-danger" data-dismiss="modal">Kapat</button>
-                <button type="button" class="btn btn-primary search">Arama Yap</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-
 
 @section Scripts {
 
@@ -164,7 +137,6 @@
             });
 
             $('#categoryTable').on('click', '.update-attribute', function (e) {
-                console.log("deneme");
                 e.preventDefault();
                 var platform = $(this).data('platform');
                 var $btn = $(this);
