@@ -1,9 +1,4 @@
-﻿using DocumentFormat.OpenXml.Office2010.ExcelAc;
-using DocumentFormat.OpenXml.Spreadsheet;
-using DocumentFormat.OpenXml.VariantTypes;
-using DocumentFormat.OpenXml.Wordprocessing;
-using Microsoft.Identity.Client.Extensions.Msal;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Pazaryeri.Entity.Trendyol;
 using Pazaryeri.Entity.Trendyol.Categories;
 using Pazaryeri.Entity.Trendyol.CategoryAttribute;

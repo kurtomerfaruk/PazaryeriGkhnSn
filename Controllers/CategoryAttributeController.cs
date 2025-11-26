@@ -9,13 +9,13 @@ namespace Pazaryeri.Controllers
     public class CategoryAttributeController : BaseController
     {
         private readonly ICategoryAttributeRepository _categoryAttributeRepository;
-        private readonly ILogger<BrandController> _logger;
+        private readonly ILogger<CategoryAttributeController> _logger;
         private readonly IConfiguration _configuration;
         private readonly IPlatformServiceFactory _platformServiceFactory;
 
         public CategoryAttributeController(ICategoryAttributeRepository categoryAttributeRepository,
             IPlatformServiceFactory platformServiceFactory,
-            ILogger<BrandController> logger,
+            ILogger<CategoryAttributeController> logger,
             IConfiguration configuration)
         {
             _categoryAttributeRepository = categoryAttributeRepository;
@@ -59,12 +59,11 @@ namespace Pazaryeri.Controllers
                     {
                         id = o.Id,
                         platform = GetPlatformDisplayName(o.Platform),
+                        categoryAttributeId=o.CategoryAttributeId,
                         categoryId = o.CategoryId,
                         category = o.Category,
-                        attributeId = o.AttributeId,
-                        attributeName = o.AttributeName,
-                        attributeValueId = o.AttributeValueId,
-                        attributeValueName = o.AttributeValueName,
+                        name=o.Name,
+                        allowCustom=o.AllowCustom,
                         actions = o.Id
                     })
                 };

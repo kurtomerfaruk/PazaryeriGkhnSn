@@ -9,7 +9,9 @@
         <h3 class="content-header-title mb-0 d-inline-block">Ürün Yönetimi</h3>
     </div>
     <div class="content-header-right col-md-6 col-12">
+        
         <div class="dropdown float-md-right">
+            <a href="/Product/Create" class="btn btn-primary">Ekle</a>
             <button class="btn btn-primary dropdown-toggle px-2" id="dropdownBreadcrumbButton" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Ürünleri Çek</button>
             <div class="dropdown-menu" aria-labelledby="dropdownBreadcrumbButton">
                 @foreach (var platform in ViewBag.Platforms)
@@ -44,9 +46,9 @@
             <thead>
                 <tr>
                     <th>ID</th>
-                    <th>Platform</th>
+                   @*  <th>Platform</th>
                     <th>Başlık</th>
-                    <th>Alt Başlık</th>
+                    <th>Alt Başlık</th> *@
                     <th>İşlemler</th>
                 </tr>
             </thead>
@@ -94,9 +96,6 @@
                 },
                 columns: [
                     { data: 'id',name:'id' },
-                    { data: 'platform',name:'platform' },
-                    { data: 'title',name:'title' },
-                    { data: 'subtitle' ,name:'subtitle'},
                     {
                         data: 'actions',
                         render: function (data, type, row) {

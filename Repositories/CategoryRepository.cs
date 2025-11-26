@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Pazaryeri.Data;
+using Pazaryeri.Dtos;
 using Pazaryeri.Models;
 using Pazaryeri.Repositories.Interfaces;
 using System.Linq.Expressions;
@@ -112,6 +113,39 @@ namespace Pazaryeri.Repositories
         {
             await _context.Categories.AddRangeAsync(categories);
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<CategoryDto> GetCategoryWithAttributesAsync(int categoryId)
+        {
+            var category = await _context.Categories
+                 .Include(c => c.CategoryAttributes)
+                 .ThenInclude(a => a.Values)
+                 .FirstOrDefaultAsync(c => c.Id == categoryId);
+
+            if (category == null) return null;
+
+            var dto = new CategoryDto
+            {
+                Id = category.Id,
+                Name = category.Title,
+                CategoryAttributes = category.CategoryAttributes.Select(a => new CategoryAttributeDto
+                {
+                    Id = a.Id,
+                    Name = a.Name,
+                    AllowCustom = a.AllowCustom,
+                    Required = a.Required,
+                    Platform = a.Platform,
+                    AllowMultipleAttributeValues = a.AllowMultipleAttributeValues,
+                    Varianter = a.Varianter,
+                    Values = a.Values.Select(v => new CategoryAttributeValueDto
+                    {
+                        Id = v.Id,
+                        Name = v.Name,
+                    }).ToList()
+                }).ToList()
+            };
+
+            return dto;
         }
     }
 }

@@ -1,0 +1,74 @@
+﻿@using Pazaryeri.ViewModels
+@model ProductViewModel
+
+@if (Model.Variants != null)
+{
+    for (int i = 0; i < Model.Variants.Count; i++)
+    {
+        <div class="variant-item border p-3 mb-3">
+            <div class="row">
+                @*<div class="col-md-4">
+                    <div class="form-group">
+                        <label asp-for="Variants[i].AttributeType" class="control-label">Varyasyon Tipi</label>
+                        <select asp-for="Variants[i].AttributeType" class="form-control">
+                            <option value="">Seçiniz</option>
+                            <option value="Color">Renk</option>
+                            <option value="Size">Beden</option>
+                            <option value="Material">Materyal</option>
+                        </select>
+                        <span asp-validation-for="Variants[i].AttributeType" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label asp-for="Variants[i].AttributeValue" class="control-label">Varyasyon Değeri</label>
+                        <input asp-for="Variants[i].AttributeValue" class="form-control" />
+                        <span asp-validation-for="Variants[i].AttributeValue" class="text-danger"></span>
+                    </div>
+                </div>*@
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label asp-for="Variants[i].Sku" class="control-label">SKU</label>
+                        <input asp-for="Variants[i].Sku" class="form-control" />
+                        <span asp-validation-for="Variants[i].Sku" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label asp-for="Variants[i].Price" class="control-label">Fiyat</label>
+                        <input asp-for="Variants[i].Price" type="number" step="0.01" class="form-control" />
+                        <span asp-validation-for="Variants[i].Price" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label asp-for="Variants[i].StockQuantity" class="control-label">Stok</label>
+                        <input asp-for="Variants[i].StockQuantity" type="number" class="form-control" />
+                        <span asp-validation-for="Variants[i].StockQuantity" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label asp-for="Variants[i].Barcode" class="control-label">Barkod</label>
+                        <input asp-for="Variants[i].Barcode" class="form-control" />
+                        <span asp-validation-for="Variants[i].Barcode" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="control-label">Varyasyon Görselleri</label>
+                <input type="file" asp-for="Variants[i].ImageFiles" class="form-control" multiple accept="image/*" />
+                <small class="form-text text-muted">Birden fazla resim seçebilirsiniz</small>
+            </div>
+
+            @if (i > 0)
+            {
+                <button type="button" class="btn btn-sm btn-danger remove-variant">Kaldır</button>
+            }
+        </div>
+    }
+}

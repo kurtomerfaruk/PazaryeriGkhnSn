@@ -87,7 +87,7 @@
                     {
                         data: 'actions',
                         render: function (data, type, row) {
-                            return `<button class="btn btn-sm btn-info update-attribute" data-id="${row.id}" data-toggle="tooltip" title="Detay">
+                            return `<button class="btn btn-sm btn-info update-attribute" data-id="${row.id}" data-categoryid="${row.categoryId}" data-toggle="tooltip" title="Detay">
                                 <i class="la la-eye"></i>
                                 </button>`;
 
@@ -141,12 +141,13 @@
                 var platform = $(this).data('platform');
                 var $btn = $(this);
                 var categoryId = $(this).data('id');
+                var trendyolCategoryId = $(this).data('categoryid');
 
                 $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Çekiliyor...');
 
                 var url = '@Url.Action("FetchTrendyolCategoryAttributes")';
 
-                var data = { categoryId: categoryId };
+                var data = { categoryId: categoryId,trendyolCategoryId:trendyolCategoryId };
 
                 $.post(url, data)
                     .done(function (response) {

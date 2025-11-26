@@ -6,6 +6,7 @@ using Pazaryeri.Models;
 using Pazaryeri.Repositories;
 using Pazaryeri.Repositories.Interfaces;
 using Pazaryeri.Services;
+using System.ComponentModel;
 
 namespace Pazaryeri.Controllers
 {
@@ -145,15 +146,41 @@ namespace Pazaryeri.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> FetchTrendyolCategoryAttributes(int categoryId)
+        public async Task<IActionResult> FetchTrendyolCategoryAttributes(int categoryId,int trendyolCategoryId)
         {
             try
             {
                 var trendyolService = _platformServiceFactory.GetTrendyolService();
-                TrendyolCategoryAttributes attributes = await trendyolService.GetCategoryAttributesAsync(categoryId);
+                TrendyolCategoryAttributes attributes = await trendyolService.GetCategoryAttributesAsync(trendyolCategoryId);
+
+                Category category =await _categoryRepository.GetByIdAsync(categoryId);
+
+                List<Models.CategoryAttribute> categoryAttributes = new List<Models.CategoryAttribute>();
+
+                foreach (var attribute in attributes.categoryAttributes)
+                {
+                    Models.CategoryAttribute categoryAttribute = new Models.CategoryAttribute
+                    {
+                        CategoryAttributeId = attribute.attribute.id,
+                        Name = attribute.attribute.name,
+                        AllowCustom = attribute.allowCustom,
+                        Required = attribute.required,
+                        Varianter = attribute.varianter,
+                        Slicer = attribute.slicer,
+                        AllowMultipleAttributeValues = attribute.allowMultipleAttributeValues,
+                        Category = category,
+                        Values = attribute.attributeValues.Select(v => new CategoryAttributeValue
+                        {
+                            CategoryAttributeValueId = v.id,
+                            Name=v.name
+                        }).ToList()
+                    };
+
+                    categoryAttributes.Add(categoryAttribute);
+                }
 
 
-                var categoryAttributes = ConvertToCategoryAttributes(categoryId, attributes);
+                //var categoryAttributes = ConvertToCategoryAttributes(categoryId, attributes);
 
                 await _categoryAttributeRepository.AddOrUpdateRangeAsync(categoryAttributes);
                 await _categoryAttributeRepository.SaveChangesAsync();
@@ -212,43 +239,35 @@ namespace Pazaryeri.Controllers
             return result;
         }
 
-        private List<Models.CategoryAttribute> ConvertToCategoryAttributes(int categoryId, TrendyolCategoryAttributes attributes)
-        {
-            var result = new List<Models.CategoryAttribute>();
+        //private List<Models.CategoryAttribute> ConvertToCategoryAttributes(int categoryId, TrendyolCategoryAttributes attributes)
+        //{
+        //    var result = new List<Models.CategoryAttribute>();
 
-            foreach (var attribute in attributes.categoryAttributes)
-            {
-                var mainAttribute = new Models.CategoryAttribute
-                {
-                    CategoryId = categoryId,
-                    AttributeId = attribute.attribute.id.ToString(),
-                    AttributeName = attribute.attribute.name?.Trim(),
-                    AttributeValueId = null,
-                    AttributeValueName = null,
-                    Platform = Platform.Trendyol
-                };
-                result.Add(mainAttribute);
+        //    foreach (var attribute in attributes.categoryAttributes)
+        //    {
+        //        var mainAttribute = new Models.CategoryAttribute
+        //        {
+        //            CategoryId = categoryId,
+        //            Platform = Platform.Trendyol
+        //        };
+        //        result.Add(mainAttribute);
 
-                if (attribute.attributeValues != null && attribute.attributeValues.Any())
-                {
-                    foreach (var value in attribute.attributeValues)
-                    {
-                        var valueAttribute = new Models.CategoryAttribute
-                        {
-                            CategoryId = categoryId,
-                            AttributeId = attribute.attribute.id.ToString(),
-                            AttributeName = attribute.attribute.name?.Trim(),
-                            AttributeValueId = value.id.ToString(),
-                            AttributeValueName = value.name?.Trim(),
-                            Platform = Platform.Trendyol
-                        };
-                        result.Add(valueAttribute);
-                    }
-                }
-            }
+        //        if (attribute.attributeValues != null && attribute.attributeValues.Any())
+        //        {
+        //            foreach (var value in attribute.attributeValues)
+        //            {
+        //                var valueAttribute = new Models.CategoryAttribute
+        //                {
+        //                    CategoryId = categoryId,
+        //                    Platform = Platform.Trendyol
+        //                };
+        //                result.Add(valueAttribute);
+        //            }
+        //        }
+        //    }
 
-            return result;
-        }
+        //    return result;
+        //}
 
 
         private string GetPlatformDisplayName(Platform platform)

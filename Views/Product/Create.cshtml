@@ -1,0 +1,232 @@
+﻿@model Pazaryeri.ViewModels.ProductViewModel
+
+<h2>Ürün Ekle</h2>
+
+<form asp-action="Create" method="post" enctype="multipart/form-data" id="productForm">
+    @Html.AntiForgeryToken()
+
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Temel Bilgiler -->
+            <div class="card mb-4">
+                <div class="card-header"><h5>Temel Bilgiler</h5></div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label asp-for="Title"></label>
+                        <input asp-for="Title" class="form-control" />
+                        <span asp-validation-for="Title" class="text-danger"></span>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="ProductMainId"></label>
+                                <input asp-for="ProductMainId" class="form-control" />
+                                <span asp-validation-for="ProductMainId" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="ProductCode"></label>
+                                <input asp-for="ProductCode" class="form-control" />
+                                <span asp-validation-for="ProductCode" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <input type="hidden" asp-for="Description" id="Description" />
+                        <label asp-for="Description"></label>
+                        <div id="editor" style="height:200px">@Html.Raw(Model.Description)</div>
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="BrandId"></label>
+                        <select asp-for="BrandId" asp-items="Model.Brands" class="form-control select2"></select>
+                        <span asp-validation-for="BrandId" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="CategoryId"></label>
+                        <select asp-for="CategoryId" asp-items="Model.Categories" class="form-control select2"></select>
+                        <span asp-validation-for="CategoryId" class="text-danger"></span>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label asp-for="Price"></label>
+                            <input asp-for="Price" type="number" step="0.01" class="form-control" />
+                            <span asp-validation-for="Price" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="StockQuantity"></label>
+                            <input asp-for="StockQuantity" type="number" class="form-control" />
+                            <span asp-validation-for="StockQuantity" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dinamik Özellikler -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5>Özellikler</h5>
+                    <h5><span style="color:red">*</span> işaretli alanlar zorunludur.</h5>
+                </div>
+                <div class="card-body" id="attributeContainer">
+                    Kategori seçilince özellikler otomatik yüklenecek...
+                </div>
+            </div>
+
+            <!-- Varyasyonlar -->
+            <div class="card mb-4">
+                <div class="card-header"><h5>Varyasyonlar</h5></div>
+                <div class="card-body">
+                    <div id="variantRepeater">
+                        <div data-repeater-list="Variants">
+                            <div data-repeater-item class="p-2 mb-2">
+                                <div class="variation-attributes"></div>
+                                <input type="text" name="Variants[0][Sku]" placeholder="SKU" class="form-control mb-1" />
+                                <input type="number" name="Variants[0][Price]" placeholder="Fiyat" class="form-control mb-1" />
+                                <input type="number" name="Variants[0][StockQuantity]" placeholder="Stok" class="form-control mb-1" />
+                                <input type="text" name="Variants[0][Barcode]" placeholder="Barkod" class="form-control mb-1" />
+                                <input data-repeater-delete type="button" value="Sil" class="btn btn-danger btn-sm float-right" />
+                                <hr />
+                            </div>
+                        </div>
+                        <input data-repeater-create type="button" value="Varyasyon Ekle" class="btn btn-primary mt-2" />
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Görseller -->
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header"><h5>Ürün Görselleri</h5></div>
+                <div class="card-body">
+                    <input asp-for="ImageFiles" type="file" class="form-control" multiple accept="image/*" />
+                    <div id="imagePreview"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <button type="submit" class="btn btn-success">Ürünü Kaydet ve Trendyol'a Gönder</button>
+        <a asp-action="Index" class="btn btn-secondary">İptal</a>
+    </div>
+</form>
+
+@section Scripts {
+    <link rel="stylesheet" href="~/app-assets/vendors/css/editors/quill/quill.snow.css" />
+    <link rel="stylesheet" href="~/app-assets/vendors/css/forms/selects/select2.min.css" />
+    <script src="~/app-assets/vendors/js/editors/quill/quill.min.js"></script>
+    <script src="~/app-assets/vendors/js/forms/repeater/jquery.repeater.min.js"></script>
+    <script src="~/app-assets/vendors/js/forms/select/select2.full.min.js"></script>
+    <script src="~/app-assets/vendors/js/extensions/toastr.min.js"></script>
+
+    <script>
+    $(".select2").select2();
+
+    var quill = new Quill("#editor", { theme: "snow" });
+
+    var existingAttributes = @Html.Raw(Json.Serialize(Model.CategoryAttributes));
+    var existingVariants = @Html.Raw(Json.Serialize(Model.Variants));
+
+    function renderAttributes(attributes){
+        $("#attributeContainer").empty();
+        let html = `<div class="row">`;
+        attributes.forEach(attr => {
+            if(attr.varianter){
+                window.variationAttributes ||= [];
+                window.variationAttributes.push(attr);
+                return;
+            }
+            html += `<div class="col-md-6"><div class="form-group">
+                        <label>${attr.name} ${attr.required?'<span style="color:red">*</span>':''}</label>`;
+            if(attr.allowCustom){
+                html += `<input type="text" name="Attributes[${attr.id}]" class="form-control" ${attr.required?'required':''}/>`;
+            } else {
+                let multiple = attr.allowMultipleAttributeValues?'multiple':'';
+                html += `<select name="Attributes[${attr.id}]${multiple?'[]':''}" class="form-control select2" ${attr.required?'required':''}>`;
+                html += "<option value=''>Seçiniz</option>";
+                attr.values.forEach(v=>html+=`<option value='${v.id}'>${v.name}</option>`);
+                html += `</select>`;
+            }
+            html += `</div></div>`;
+        });
+        html += `</div>`;
+        $("#attributeContainer").append(html);
+        $(".select2").select2();
+    }
+
+    $(document).ready(function(){
+        // Quill -> hidden input
+        $("form").on("submit", function(){ $("#Description").val(quill.root.innerHTML); });
+
+        // Render existing attributes
+        if(existingAttributes.length>0){
+            renderAttributes(existingAttributes);
+        }
+
+        // Repeater
+        var repeater = $("#variantRepeater").repeater({
+            initEmpty: false,
+            show: function () {
+                $(this).slideDown();
+                let container = $(this).find(".variation-attributes");
+
+                // Eğer POST sonrası zaten varianter değerler gelmişse onları da kullan
+                let index = $(this).index();
+                let existingVariant = existingVariants[index] || null;
+
+                renderVariationSelects(container, existingVariant);
+
+                $(".select2").select2();
+            },
+});
+
+        if (existingVariants.length > 0) {
+            $("#variantRepeater [data-repeater-item]").remove();
+            existingVariants.forEach(v=>{
+                repeater.repeaterVal().Variants = existingVariants;
+            });
+        }
+
+        // Category değiştiğinde
+        $("#CategoryId").change(function(){
+            var categoryId = $(this).val();
+            $.get('@Url.Action("GetCategoryAttributes")',{categoryId:categoryId})
+                .done(function(resp){
+                    if(resp.success){
+                        renderAttributes(resp.data.categoryAttributes);
+                        $("#variantRepeater [data-repeater-item]").remove();
+                        $("#variantRepeater [data-repeater-create]").click();
+                    } else {
+                        toastr.error(resp.message);
+                    }
+                }).fail(()=>toastr.error("Detaylar yüklenirken hata oluştu."));
+        });
+    });
+
+        function renderVariationSelects(itemContainer, existingVariant = null) {
+            // window.variationAttributes listesinde varianter özellikler var
+            itemContainer.empty();
+            window.variationAttributes.forEach(attr => {
+                console.log(attr.id);
+                let html = `<div class='mb-2'><label>${attr.name}</label>`;
+                html += `<select name="Variants[${itemContainer.index()}].VariationAttr_${attr.id}" class='form-control select2'>`;
+                html += "<option value=''>Seçiniz</option>";
+                attr.values.forEach(v => {
+                    let selected = existingVariant && existingVariant[`VariationAttr_${attr.id}`] == v.id ? "selected" : "";
+                    html += `<option value='${v.id}' ${selected}>${v.name}</option>`;
+                });
+                html += "</select></div>";
+                itemContainer.append(html);
+            });
+        }
+    </script>
+}

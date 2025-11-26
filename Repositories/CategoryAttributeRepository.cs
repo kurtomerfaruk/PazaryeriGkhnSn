@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using DocumentFormat.OpenXml.Office2010.Excel;
+using Microsoft.EntityFrameworkCore;
 using Pazaryeri.Data;
 using Pazaryeri.Models;
 using Pazaryeri.Repositories.Interfaces;
@@ -50,10 +51,7 @@ namespace Pazaryeri.Repositories
             {
                 query = query.Where(o =>
                     o.CategoryId.Equals(search) ||
-                    o.AttributeId.Contains(search) ||
-                    o.AttributeName.Contains(search) ||
-                    o.AttributeValueId.Contains(search) ||
-                    o.AttributeValueName.Contains(search) ||
+                   
                     o.Platform.ToString().Contains(search));
             }
 
@@ -84,10 +82,6 @@ namespace Pazaryeri.Repositories
             {
                 "id" => categoryAttribute => categoryAttribute.Id,
                 "categoryId" => categoryAttribute => categoryAttribute.CategoryId,
-                "attributeId" => categoryAttribute => categoryAttribute.AttributeId,
-                "attributeName" => categoryAttribute => categoryAttribute.AttributeName,
-                "attributeValueId" => categoryAttribute => categoryAttribute.AttributeValueId,
-                "attributeValueName" => categoryAttribute => categoryAttribute.AttributeValueName,
                 "platform" => categoryAttribute => categoryAttribute.Platform,
                 _ => categoryAttribute => categoryAttribute.Id
             };
@@ -104,15 +98,10 @@ namespace Pazaryeri.Repositories
         {
             foreach (var attribute in categoryAttributes)
             {
-                var existing = await GetByCompositeKeyAsync(
-                    attribute.CategoryId,
-                    attribute.AttributeId,
-                    attribute.AttributeValueId);
+                var existing = await GetByCompositeKeyAsync( attribute.CategoryId);
 
                 if (existing != null)
                 {
-                    existing.AttributeName = attribute.AttributeName;
-                    existing.AttributeValueName = attribute.AttributeValueName;
                     _context.CategoryAttributes.Update(existing);
                 }
                 else
@@ -122,13 +111,11 @@ namespace Pazaryeri.Repositories
             }
         }
 
-        public async Task<CategoryAttribute> GetByCompositeKeyAsync(int categoryId, string attributeId, string? attributeValueId)
+        public async Task<CategoryAttribute> GetByCompositeKeyAsync(long categoryId)
         {
             return await _context.CategoryAttributes
                 .FirstOrDefaultAsync(ca =>
                     ca.CategoryId == categoryId &&
-                    ca.AttributeId == attributeId &&
-                    ca.AttributeValueId == attributeValueId &&
                     ca.Platform == Platform.Trendyol);
         }
 
@@ -136,5 +123,7 @@ namespace Pazaryeri.Repositories
         {
             await _context.SaveChangesAsync();
         }
+
+        
     }
 }

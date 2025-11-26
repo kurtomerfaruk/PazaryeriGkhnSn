@@ -9,5 +9,6 @@
         public Platform Platform { get; set; } = Platform.Trendyol;
         public string ParentCategoryId { get; set; }
         public bool TopCategory { get; set; } = false;
+        public ICollection<CategoryAttribute> CategoryAttributes { get; set; } = new List<CategoryAttribute>();
     }
 }
