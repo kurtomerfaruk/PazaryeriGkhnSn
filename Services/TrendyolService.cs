@@ -430,8 +430,9 @@ namespace Pazaryeri.Services
                     var request = new RestRequest($"qna/sellers/{_configuration["Trendyol:SupplierId"]}/questions/filter");
                     request.AddParameter("page", currentPage);
                     request.AddParameter("size", size);
+                    //request.AddParameter("status", "WAITING_FOR_ANSWER");
                     request.AddParameter("orderByField", "CreatedDate");
-                    request.AddParameter("orderByDirection", "DESC");
+                    request.AddParameter("orderByDirection", "ASC");
 
                     var response = await _client.ExecuteAsync(request);
 

@@ -97,7 +97,7 @@ namespace Pazaryeri.Controllers
                         qst.Text = question.Text;
                         qst.Answer = JsonConvert.SerializeObject(question.Answer);
                         qst.Status = Util.GetTrendyolQuestionStatus(question.Status);
-                        await _questionRepository.UpdateAsync(question);
+                        await _questionRepository.UpdateAsync(qst);
                         updatedCount++;
                     }
                     else
