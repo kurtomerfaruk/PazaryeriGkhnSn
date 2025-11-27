@@ -55,6 +55,8 @@ namespace Pazaryeri.ViewModels
         public List<int> VariantIds { get; set; } = new List<int>();
 
         public Dictionary<int, string> AttributeValues { get; set; } = new Dictionary<int, string>();
+        public List<string> TempProductImageUrls { get; set; } = new List<string>();
+        public Dictionary<int, List<string>> TempVariantImageUrls { get; set; } = new Dictionary<int, List<string>>();
 
     }
 }

@@ -4883,3 +4883,4 @@ wwwroot\css\site.css
 wwwroot\favicon.ico
 wwwroot\i18n\tr.json
 wwwroot\js\site.js
+wwwroot\uploads\products\9a52a007-0e38-4797-bf6c-ea6fb65810b3.jpg

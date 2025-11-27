@@ -19,5 +19,7 @@ namespace Pazaryeri.Repositories.Interfaces
         Task AddVariantImageAsync(int variantId, string imageUrl);
         Task DeleteProductAsync(int id);
         Task<bool> ProductCodeExistsAsync(string productCode, int? excludeId = null);
+        Task SetMainImageAsync(int imageId);
+        Task DeleteImageAsync(int imageId);
     }
 }

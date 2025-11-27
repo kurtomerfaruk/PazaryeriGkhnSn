@@ -6,9 +6,12 @@ namespace Pazaryeri.Models
     {
         public int Id { get; set; }
         public int ProductVariantId { get; set; }
-        public ProductVariant ProductVariant { get; set; }
+       
 
         [Required]
         public string ImageUrl { get; set; }
+        public DateTime CreatedDate { get; set; } = DateTime.Now;
+
+        public ProductVariant ProductVariant { get; set; }
     }
 }

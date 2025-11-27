@@ -12,5 +12,6 @@ namespace Pazaryeri.Models
         public string ImageUrl { get; set; }
         public bool IsMainImage { get; set; }
         public int SortOrder { get; set; }
+        public DateTime CreatedDate { get; set; } = DateTime.Now;
     }
 }

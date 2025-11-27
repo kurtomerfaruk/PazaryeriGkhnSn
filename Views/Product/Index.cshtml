@@ -101,7 +101,8 @@
                         render: function (data, type, row) {
                             var html =`<button class="btn btn-sm btn-info details-btn" data-id="${row.id}" data-toggle="tooltip" title="Detay">
                                         <i class="la la-eye"></i>
-                                    </button>`;
+                                    </button>
+                                    <a href="/Product/Edit/${row.id}" class="btn btn-warning btn-sm">Düzenle</a>`;
 
                              return html;
                         },
@@ -234,9 +235,9 @@
                                     `).join('')}
 
                                     <!-- Ürünler -->
-                                    
+
                                     <div class="tab-pane fade" id="addressInfo">
-                                       
+
                                     </div>
 
                                 </div>
@@ -319,7 +320,7 @@
                 .catch(error => {
                     console.error('Hata:', error);
                     const errorMessage = error.message || 'Dosya yüklenirken bir hata oluştu.';
-                   
+
                     toastr.error(errorMessage);
                 })
                 .finally(() => {

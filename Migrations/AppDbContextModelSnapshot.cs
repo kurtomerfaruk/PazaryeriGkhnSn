@@ -219,6 +219,9 @@ namespace Pazaryeri.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("Active")
+                        .HasColumnType("bit");
+
                     b.Property<int>("BrandId")
                         .HasColumnType("int");
 
@@ -254,6 +257,9 @@ namespace Pazaryeri.Migrations
                     b.Property<string>("TrendyolProductId")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime>("UpdatedDate")
+                        .HasColumnType("datetime2");
+
                     b.HasKey("Id");
 
                     b.HasIndex("BrandId");
@@ -273,6 +279,9 @@ namespace Pazaryeri.Migrations
 
                     b.Property<int>("AttributeId")
                         .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("ProductId")
                         .HasColumnType("int");
@@ -294,6 +303,9 @@ namespace Pazaryeri.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("ImageUrl")
                         .IsRequired()
@@ -323,8 +335,14 @@ namespace Pazaryeri.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("Active")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Barcode")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
@@ -337,6 +355,12 @@ namespace Pazaryeri.Migrations
 
                     b.Property<int>("StockQuantity")
                         .HasColumnType("int");
+
+                    b.Property<int>("TempId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdatedDate")
+                        .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
@@ -359,6 +383,9 @@ namespace Pazaryeri.Migrations
                     b.Property<int>("AttributeValueId")
                         .HasColumnType("int");
 
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<int>("VariantId")
                         .HasColumnType("int");
 
@@ -376,6 +403,9 @@ namespace Pazaryeri.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("ImageUrl")
                         .IsRequired()
