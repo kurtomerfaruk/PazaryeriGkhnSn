@@ -14,6 +14,8 @@ namespace Pazaryeri.ViewModels
         //[Display(Name = "Varyasyon Değeri")]
         //public string AttributeValue { get; set; }
 
+        public int TempId { get; set; }
+
         [Display(Name = "SKU")]
         public string Sku { get; set; }
 
@@ -29,5 +31,7 @@ namespace Pazaryeri.ViewModels
         [Display(Name = "Varyasyon Görselleri")]
         public List<IFormFile> ImageFiles { get; set; } = new();
         public List<string> ExistingImages { get; set; } = new();
+
+        public Dictionary<int, int> VariationAttributes { get; set; } = new Dictionary<int, int>();
     }
 }

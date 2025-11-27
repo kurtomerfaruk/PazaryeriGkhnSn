@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Pazaryeri.Data;
 using Pazaryeri.Models;
 using Pazaryeri.Repositories.Interfaces;
@@ -183,43 +184,118 @@ namespace Pazaryeri.Repositories
 
         public async Task<Product> CreateProductAsync(ProductViewModel model)
         {
-            if (await ProductCodeExistsAsync(model.ProductCode))
-            {
-                throw new InvalidOperationException("Bu ürün kodu zaten kullanılıyor.");
-            }
-            var product = new Product
-            {
-                ProductCode = model.ProductCode,
-                Title = model.Title,
-                Description = model.Description,
-                Price = model.Price,
-                StockQuantity = model.StockQuantity,
-                BrandId = model.BrandId.Value,
-                CategoryId = model.CategoryId.Value,
-                CreatedDate = DateTime.Now
-            };
+            using var transaction = await _context.Database.BeginTransactionAsync();
 
-
-            if (model.Variants?.Any() == true)
+            try
             {
+                // Ana ürünü oluştur
+                var product = new Product
+                {
+                    Title = model.Title,
+                    ProductMainId = model.ProductMainId,
+                    ProductCode = model.ProductCode,
+                    Description = model.Description,
+                    Price = model.Price,
+                    StockQuantity = model.StockQuantity,
+                    BrandId = model.BrandId.Value,
+                    CategoryId = model.CategoryId.Value,
+                    CreatedDate = DateTime.Now
+                };
+
+                _context.Products.Add(product);
+                await _context.SaveChangesAsync();
+
+                // Özellikleri kaydet
+                foreach (var attribute in model.AttributeValues)
+                {
+                    var productAttribute = new ProductAttribute
+                    {
+                        ProductId = product.Id,
+                        AttributeId = attribute.Key,
+                        Value = attribute.Value
+                    };
+                    _context.ProductAttributes.Add(productAttribute);
+                }
+
+                // Varyasyonları kaydet
                 foreach (var variantModel in model.Variants)
                 {
                     var variant = new ProductVariant
                     {
+                        ProductId = product.Id,
                         Sku = variantModel.Sku,
                         Price = variantModel.Price,
                         StockQuantity = variantModel.StockQuantity,
                         Barcode = variantModel.Barcode
                     };
-                    product.Variants.Add(variant);
+
+                    _context.ProductVariants.Add(variant);
+                    await _context.SaveChangesAsync();
+
+                    // Varyasyon özelliklerini kaydet
+                    foreach (var varAttr in variantModel.VariationAttributes)
+                    {
+                        var variantAttribute = new ProductVariantAttribute
+                        {
+                            VariantId = variant.Id,
+                            AttributeId = varAttr.Key,
+                            AttributeValueId = varAttr.Value
+                        };
+                        _context.ProductVariantAttributes.Add(variantAttribute);
+                    }
                 }
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return product;
             }
-
-            _context.Products.Add(product);
-            await _context.SaveChangesAsync();
-
-            return product;
+            catch (Exception)
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
+
+        //public async Task<Product> CreateProductAsync(ProductViewModel model)
+        //{
+        //    if (await ProductCodeExistsAsync(model.ProductCode))
+        //    {
+        //        throw new InvalidOperationException("Bu ürün kodu zaten kullanılıyor.");
+        //    }
+        //    var product = new Product
+        //    {
+        //        ProductCode = model.ProductCode,
+        //        Title = model.Title,
+        //        Description = model.Description,
+        //        Price = model.Price,
+        //        StockQuantity = model.StockQuantity,
+        //        BrandId = model.BrandId.Value,
+        //        CategoryId = model.CategoryId.Value,
+        //        CreatedDate = DateTime.Now
+        //    };
+
+
+        //    if (model.Variants?.Any() == true)
+        //    {
+        //        foreach (var variantModel in model.Variants)
+        //        {
+        //            var variant = new ProductVariant
+        //            {
+        //                Sku = variantModel.Sku,
+        //                Price = variantModel.Price,
+        //                StockQuantity = variantModel.StockQuantity,
+        //                Barcode = variantModel.Barcode
+        //            };
+        //            product.Variants.Add(variant);
+        //        }
+        //    }
+
+        //    _context.Products.Add(product);
+        //    await _context.SaveChangesAsync();
+
+        //    return product;
+        //}
 
         public async Task<Product> UpdateProductAsync(ProductViewModel model)
         {
@@ -246,7 +322,6 @@ namespace Pazaryeri.Repositories
             product.BrandId = model.BrandId.Value;
             product.CategoryId = model.CategoryId.Value;
 
-            // Varyasyonları güncelle
             await UpdateProductVariantsAsync(product, model.Variants);
 
             _context.Products.Update(product);
@@ -257,14 +332,12 @@ namespace Pazaryeri.Repositories
 
         private async Task UpdateProductVariantsAsync(Product product, List<ProductVariantViewModel> variantModels)
         {
-            // Mevcut varyasyonları güncelle veya yeni ekle
             foreach (var variantModel in variantModels)
             {
                 var existingVariant = product.Variants.FirstOrDefault(v => v.Id == variantModel.Id);
 
                 if (existingVariant != null)
                 {
-                    // Mevcut varyasyonu güncelle
                     existingVariant.Sku = variantModel.Sku;
                     existingVariant.Price = variantModel.Price;
                     existingVariant.StockQuantity = variantModel.StockQuantity;
@@ -272,7 +345,6 @@ namespace Pazaryeri.Repositories
                 }
                 else
                 {
-                    // Yeni varyasyon ekle
                     var newVariant = new ProductVariant
                     {
                         Sku = variantModel.Sku,
@@ -285,7 +357,6 @@ namespace Pazaryeri.Repositories
                 }
             }
 
-            // Silinen varyasyonları kaldır
             var variantIdsToKeep = variantModels.Where(v => v.Id > 0).Select(v => v.Id).ToList();
             var variantsToRemove = product.Variants.Where(v => v.Id > 0 && !variantIdsToKeep.Contains(v.Id)).ToList();
 
@@ -326,7 +397,7 @@ namespace Pazaryeri.Repositories
             {
                 ProductId = productId,
                 ImageUrl = imageUrl,
-                IsMainImage = !product.Images.Any(), // İlk resim ana resim olur
+                IsMainImage = !product.Images.Any(), 
                 SortOrder = product.Images.Count + 1
             };
 

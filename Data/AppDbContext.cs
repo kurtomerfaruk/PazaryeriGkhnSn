@@ -9,10 +9,16 @@ namespace Pazaryeri.Data
 
         public DbSet<Order> Orders => Set<Order>();
         public DbSet<TrendyolOrderDetail> TrendyolOrderDetails => Set<TrendyolOrderDetail>(); 
+
+        //Products 
         public DbSet<Product> Products => Set<Product>();
+        public DbSet<ProductAttribute> ProductAttributes => Set<ProductAttribute>();
         public DbSet<ProductImage> ProductImages => Set<ProductImage>();
         public DbSet<ProductVariant> ProductVariants => Set<ProductVariant>();
+        public DbSet<ProductVariantAttribute> ProductVariantAttributes => Set<ProductVariantAttribute>();
         public DbSet<ProductVariantImage> ProductVariantImages => Set<ProductVariantImage>();
+        //Products 
+
         public DbSet<Brand> Brands => Set<Brand>();
         public DbSet<Category> Categories => Set<Category>();
         public DbSet<CategoryAttribute> CategoryAttributes => Set<CategoryAttribute>();

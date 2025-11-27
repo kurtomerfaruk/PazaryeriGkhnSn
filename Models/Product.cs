@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 
 namespace Pazaryeri.Models
 {
@@ -17,13 +18,15 @@ namespace Pazaryeri.Models
         public decimal Price { get; set; }
         public int StockQuantity { get; set; }
         public int BrandId { get; set; }
-        public Brand Brand { get; set; }
+        
         public int CategoryId { get; set; }
-        public Category Category { get; set; }
-        public List<ProductImage> Images { get; set; } = new();
-        public List<ProductVariant> Variants { get; set; } = new();
-
         public string TrendyolProductId { get; set; }
         public DateTime CreatedDate { get; set; } = DateTime.Now;
+
+        public Brand Brand { get; set; }
+        public Category Category { get; set; }
+        public virtual ICollection<ProductImage> Images { get; set; } = new List<ProductImage>();
+        public virtual ICollection<ProductVariant> Variants { get; set; } = new List<ProductVariant>();
+        public virtual ICollection<ProductAttribute> Attributes { get; set; } = new List<ProductAttribute>();
     }
 }

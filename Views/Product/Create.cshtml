@@ -11,6 +11,7 @@
             <div class="card mb-4">
                 <div class="card-header"><h5>Temel Bilgiler</h5></div>
                 <div class="card-body">
+                    <!-- Mevcut form alanları aynı kalacak -->
                     <div class="form-group">
                         <label asp-for="Title"></label>
                         <input asp-for="Title" class="form-control" />
@@ -49,9 +50,11 @@
 
                     <div class="form-group">
                         <label asp-for="CategoryId"></label>
-                        <select asp-for="CategoryId" asp-items="Model.Categories" class="form-control select2"></select>
+                        <select asp-for="CategoryId" asp-items="Model.Categories" class="form-control select2" id="CategoryId"></select>
                         <span asp-validation-for="CategoryId" class="text-danger"></span>
                     </div>
+
+                    @*@Html.HiddenFor(m => m.CategoryId, new { id = "restoreCategoryId" })*@
 
                     <div class="row">
                         <div class="col-md-6">
@@ -68,6 +71,17 @@
                 </div>
             </div>
 
+            @*<div id="restoreData" style="display: none;">
+                @if (Model.VariantIds != null)
+                {
+                    foreach (var variantId in Model.VariantIds)
+                    {
+                        <input type="hidden" name="VariantIds" value="@variantId" />
+                    }
+                }
+            </div>*@
+
+
             <!-- Dinamik Özellikler -->
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
@@ -81,25 +95,14 @@
 
             <!-- Varyasyonlar -->
             <div class="card mb-4">
-                <div class="card-header"><h5>Varyasyonlar</h5></div>
-                <div class="card-body">
-                    <div id="variantRepeater">
-                        <div data-repeater-list="Variants">
-                            <div data-repeater-item class="p-2 mb-2">
-                                <div class="variation-attributes"></div>
-                                <input type="text" name="Variants[0][Sku]" placeholder="SKU" class="form-control mb-1" />
-                                <input type="number" name="Variants[0][Price]" placeholder="Fiyat" class="form-control mb-1" />
-                                <input type="number" name="Variants[0][StockQuantity]" placeholder="Stok" class="form-control mb-1" />
-                                <input type="text" name="Variants[0][Barcode]" placeholder="Barkod" class="form-control mb-1" />
-                                <input data-repeater-delete type="button" value="Sil" class="btn btn-danger btn-sm float-right" />
-                                <hr />
-                            </div>
-                        </div>
-                        <input data-repeater-create type="button" value="Varyasyon Ekle" class="btn btn-primary mt-2" />
-                    </div>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5>Varyasyonlar</h5>
+                    <button type="button" id="addVariant" class="btn btn-primary btn-sm">Varyasyon Ekle</button>
+                </div>
+                <div class="card-body" id="variantsContainer">
+                    <!-- Varyasyonlar buraya eklenecek -->
                 </div>
             </div>
-
         </div>
 
         <!-- Görseller -->
@@ -122,111 +125,463 @@
 
 @section Scripts {
     <link rel="stylesheet" href="~/app-assets/vendors/css/editors/quill/quill.snow.css" />
-    <link rel="stylesheet" href="~/app-assets/vendors/css/forms/selects/select2.min.css" />
     <script src="~/app-assets/vendors/js/editors/quill/quill.min.js"></script>
     <script src="~/app-assets/vendors/js/forms/repeater/jquery.repeater.min.js"></script>
-    <script src="~/app-assets/vendors/js/forms/select/select2.full.min.js"></script>
-    <script src="~/app-assets/vendors/js/extensions/toastr.min.js"></script>
-
+    
     <script>
-    $(".select2").select2();
+        $(".select2").select2();
 
-    var quill = new Quill("#editor", { theme: "snow" });
+        let variantCounter = 0;
+        let currentVariationAttributes = [];
 
-    var existingAttributes = @Html.Raw(Json.Serialize(Model.CategoryAttributes));
-    var existingVariants = @Html.Raw(Json.Serialize(Model.Variants));
+        // Sayfa yenileme durumunda session storage kullanabilirsiniz
+        if (sessionStorage.getItem('variantsRestored')) {
+            sessionStorage.removeItem('variantsRestored');
+        } else {
+            // İlk yükleme
+            sessionStorage.setItem('variantsRestored', 'true');
+        }
 
-    function renderAttributes(attributes){
-        $("#attributeContainer").empty();
-        let html = `<div class="row">`;
-        attributes.forEach(attr => {
-            if(attr.varianter){
-                window.variationAttributes ||= [];
-                window.variationAttributes.push(attr);
+        // Varyasyon Ekleme
+        $('#addVariant').click(function() {
+            addVariantEditor();
+        });
+
+        function addVariantEditor(variantData = null) {
+            variantCounter++;
+
+            const tempId = variantData?.tempId || variantCounter;
+            const variant = variantData || {
+                tempId: tempId,
+                sku: '',
+                price: 0,
+                stockQuantity: 0,
+                barcode: '',
+                variationAttributes: {}
+            };
+
+            const requestData = {
+                tempId: tempId,
+                variationAttributes: currentVariationAttributes || [],
+                variantData: {
+                    tempId: variant.tempId,
+                    sku: variant.sku || '',
+                    price: variant.price || 0,
+                    stockQuantity: variant.stockQuantity || 0,
+                    barcode: variant.barcode || '',
+                    variationAttributes: variant.variationAttributes || {}
+                }
+            };
+
+            // AJAX ile partial view yükle
+            $.ajax({
+                url: '@Url.Action("GetVariantEditor")',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(requestData),
+                headers: {
+                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function(response) {
+                    $('#variantsContainer').append(response);
+                    initializeVariantEvents();
+                    $('.select2').select2();
+                },
+                error: function(xhr, status, error) {
+                    console.error('Varyasyon editor yüklenemedi:', error);
+                    toastr.error('Varyasyon eklenirken hata oluştu.');
+                    createVariantManually(requestData);
+                }
+            });
+        }
+
+        function createVariantManually(requestData) {
+            const tempId = requestData.tempId;
+            const variant = requestData.variantData;
+
+            const variantHtml = `
+        <div class="variant-editor card mb-3" data-variant-id="${tempId}">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">Varyasyon ${tempId}</h6>
+                <button type="button" class="btn btn-sm btn-danger remove-variant">Kaldır</button>
+            </div>
+            <div class="card-body">
+                <input type="hidden" name="VariantIds" value="${tempId}" />
+
+                <div class="variation-attributes mb-3">
+                    ${renderVariationAttributesManually(tempId, requestData.variationAttributes)}
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>SKU *</label>
+                            <input type="text" name="Variants[${tempId}].Sku" value="${variant.sku}" class="form-control" required />
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Barkod</label>
+                            <input type="text" name="Variants[${tempId}].Barcode" value="${variant.barcode}" class="form-control" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label>Fiyat *</label>
+                            <input type="number" step="0.01" name="Variants[${tempId}].Price" value="${variant.price}" class="form-control" required />
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label>Stok *</label>
+                            <input type="number" name="Variants[${tempId}].StockQuantity" value="${variant.stockQuantity}" class="form-control" required />
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label>Varyasyon Resimleri</label>
+                            <input type="file" name="Variants[${tempId}].ImageFiles" class="form-control" multiple accept="image/*" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+            $('#variantsContainer').append(variantHtml);
+            initializeVariantEvents();
+        }
+
+        function renderVariationAttributesManually(tempId, attributes) {
+            if (!attributes || attributes.length === 0) {
+                return '<p class="text-muted">Varyasyon özelliği bulunmuyor</p>';
+            }
+
+            let html = '';
+            attributes.forEach(attr => {
+                html += `
+            <div class="form-group">
+                <label>${attr.name}</label>
+                <select name="Variants[${tempId}].VariationAttributes[${attr.id}]" class="form-control">
+                    <option value="">Seçiniz</option>
+        `;
+
+                if (attr.values && attr.values.length > 0) {
+                    attr.values.forEach(value => {
+                        const selected = variant.variationAttributes &&
+                            variant.variationAttributes[attr.id] === value.id ? 'selected' : '';
+                        html += `<option value="${value.id}" ${selected}>${value.name}</option>`;
+                    });
+                }
+
+                html += `</select></div>`;
+            });
+
+            return html;
+        }
+
+        function updateVariationAttributes(attributes) {
+            currentVariationAttributes = attributes.filter(attr => attr.varianter);
+
+            // Mevcut varyasyonları güncelle
+            $('.variant-editor').each(function () {
+                const variantId = $(this).data('variant-id');
+                updateVariantAttributes($(this), variantId);
+            });
+        }
+
+        function updateVariantAttributes(container, variantId) {
+            const attributesContainer = container.find('.variation-attributes');
+            attributesContainer.empty();
+
+            if (currentVariationAttributes.length === 0) {
+                attributesContainer.html('<p class="text-muted">Varyasyon özelliği bulunmuyor</p>');
                 return;
             }
-            html += `<div class="col-md-6"><div class="form-group">
-                        <label>${attr.name} ${attr.required?'<span style="color:red">*</span>':''}</label>`;
-            if(attr.allowCustom){
-                html += `<input type="text" name="Attributes[${attr.id}]" class="form-control" ${attr.required?'required':''}/>`;
-            } else {
-                let multiple = attr.allowMultipleAttributeValues?'multiple':'';
-                html += `<select name="Attributes[${attr.id}]${multiple?'[]':''}" class="form-control select2" ${attr.required?'required':''}>`;
-                html += "<option value=''>Seçiniz</option>";
-                attr.values.forEach(v=>html+=`<option value='${v.id}'>${v.name}</option>`);
-                html += `</select>`;
+
+            currentVariationAttributes.forEach(attr => {
+                const selectHtml = `
+            <div class="form-group">
+                <label>${attr.name}</label>
+                <select name="Variants[${variantId}].VariationAttributes[${attr.id}]"
+                        class="form-control variation-attribute-select">
+                    <option value="">Seçiniz</option>
+                    ${attr.values.map(value =>
+                    `<option value="${value.id}">${value.name}</option>`
+                ).join('')}
+                </select>
+            </div>
+        `;
+                attributesContainer.append(selectHtml);
+            });
+        }
+
+        function initializeVariantEvents() {
+            // Varyasyon kaldırma
+            $('.remove-variant').off('click').on('click', function() {
+                $(this).closest('.variant-editor').remove();
+                updateVariantIds();
+            });
+        }
+
+        function updateVariantIds() {
+            const variantIds = [];
+            $('.variant-editor').each(function() {
+                const variantId = $(this).data('variant-id');
+                variantIds.push(variantId);
+            });
+
+            // Hidden input'ları güncelle
+            $('input[name="VariantIds"]').remove();
+            variantIds.forEach(id => {
+                $('#variantsContainer').append(`<input type="hidden" name="VariantIds" value="${id}" />`);
+            });
+        }
+
+        // Kategori değiştiğinde
+        $('#CategoryId').change(function() {
+            const categoryId = $(this).val();
+
+            if (!categoryId) {
+                $('#attributeContainer').html('Kategori seçilince özellikler otomatik yüklenecek...');
+                $('#variantsContainer').empty();
+                variantCounter = 0;
+                currentVariationAttributes = [];
+                return;
             }
-            html += `</div></div>`;
+
+            $.get('@Url.Action("GetCategoryAttributes")', { categoryId: categoryId })
+                .done(function(response) {
+                    if (response.success) {
+                        var attributeValues = @Html.Raw(Json.Serialize(Model.AttributeValues ?? new Dictionary<int, string>()));
+
+                        renderAttributes(response.data.categoryAttributes, attributeValues);
+                        //renderVariationAttributes(response.data.categoryAttributes);
+                        updateVariationAttributes(response.data.categoryAttributes);
+
+                        if ($('.variant-editor').length === 0) {
+                            addVariantEditor();
+                        } else {
+                            // Mevcut varyasyonları güncelle
+                            $('.variant-editor').each(function () {
+                                const variantId = $(this).data('variant-id');
+                                updateVariantAttributes($(this), variantId);
+                            });
+                        }
+
+                        // Varyasyon konteynırını temizle ve yeni varyasyon ekle
+                        //$('#variantsContainer').empty();
+                        //variantCounter = 0;
+                        //addVariantEditor();
+                    }
+                })
+                .fail(function() {
+                    toastr.error('Kategori özellikleri yüklenirken hata oluştu.');
+                });
         });
-        html += `</div>`;
-        $("#attributeContainer").append(html);
-        $(".select2").select2();
+
+        //function renderAttributes(attributes) {
+        //    let html = '<div class="row">';
+
+        //    attributes.forEach(attr => {
+        //        if (!attr.varianter) { // Sadece varyasyon olmayan özellikler
+        //            html += `<div class="col-md-6">
+        //                        <div class="form-group">
+        //                            <label>${attr.name} ${attr.required ? '<span style="color:red">*</span>' : ''}</label>`;
+
+        //            if (attr.allowCustom) {
+        //                html += `<input type="text" name="AttributeValues[${attr.id}]" class="form-control" ${attr.required ? 'required' : ''} />`;
+        //            } else {
+        //                const multiple = attr.allowMultipleAttributeValues ? 'multiple' : '';
+        //                html += `<select name="AttributeValues[${attr.id}]${multiple ? '[]' : ''}" class="form-control select2" ${attr.required ? 'required' : ''} ${multiple}>`;
+        //                html += '<option value="">Seçiniz</option>';
+        //                attr.values.forEach(value => {
+        //                    html += `<option value="${value.id}">${value.name}</option>`;
+        //                });
+        //                html += '</select>';
+        //            }
+
+        //            html += `</div></div>`;
+        //        }
+        //    });
+
+        //    html += '</div>';
+        //    $('#attributeContainer').html(html);
+        //    $('.select2').select2();
+        //}
+
+        function renderAttributes(attributes, attributeValues) {
+    if (!attributes || attributes.length === 0) {
+        $('#attributeContainer').html('<p class="text-muted">Kategori seçilince özellikler otomatik yüklenecek...</p>');
+        return;
     }
 
-    $(document).ready(function(){
-        // Quill -> hidden input
-        $("form").on("submit", function(){ $("#Description").val(quill.root.innerHTML); });
+    let html = '<div class="row">';
 
-        // Render existing attributes
-        if(existingAttributes.length>0){
-            renderAttributes(existingAttributes);
-        }
+    attributes.forEach(attr => {
+        if (!attr.varianter) {
+            html += `<div class="col-md-6"><div class="form-group">
+                        <label>${attr.name} ${attr.required ? '<span style="color:red">*</span>' : ''}</label>`;
 
-        // Repeater
-        var repeater = $("#variantRepeater").repeater({
-            initEmpty: false,
-            show: function () {
-                $(this).slideDown();
-                let container = $(this).find(".variation-attributes");
+            // Model'den bu attribute'un değerini al
+            var attributeValue = '';
+            if (attributeValues && attributeValues[attr.id] !== undefined) {
+                attributeValue = attributeValues[attr.id];
+            }
 
-                // Eğer POST sonrası zaten varianter değerler gelmişse onları da kullan
-                let index = $(this).index();
-                let existingVariant = existingVariants[index] || null;
+            if (attr.allowCustom) {
+                // Input için value ata
+                html += `<input type="text" name="AttributeValues[${attr.id}]" value="${attributeValue}" class="form-control" ${attr.required ? 'required' : ''} />`;
+            } else {
+                const multiple = attr.allowMultipleAttributeValues ? 'multiple' : '';
+                html += `<select name="AttributeValues[${attr.id}]${multiple ? '[]' : ''}" class="form-control select2" ${attr.required ? 'required' : ''} ${multiple}>`;
+                html += '<option value="">Seçiniz</option>';
 
-                renderVariationSelects(container, existingVariant);
-
-                $(".select2").select2();
-            },
-});
-
-        if (existingVariants.length > 0) {
-            $("#variantRepeater [data-repeater-item]").remove();
-            existingVariants.forEach(v=>{
-                repeater.repeaterVal().Variants = existingVariants;
-            });
-        }
-
-        // Category değiştiğinde
-        $("#CategoryId").change(function(){
-            var categoryId = $(this).val();
-            $.get('@Url.Action("GetCategoryAttributes")',{categoryId:categoryId})
-                .done(function(resp){
-                    if(resp.success){
-                        renderAttributes(resp.data.categoryAttributes);
-                        $("#variantRepeater [data-repeater-item]").remove();
-                        $("#variantRepeater [data-repeater-create]").click();
+                attr.values.forEach(value => {
+                    // Seçili olup olmadığını kontrol et
+                    let selected = '';
+                    if (multiple) {
+                        // Çoklu seçim - array kontrolü
+                        if (attributeValue && Array.isArray(attributeValue)) {
+                            selected = attributeValue.includes(value.id.toString()) ? 'selected' : '';
+                        } else if (attributeValue) {
+                            // String olarak gelmişse split et
+                            const valuesArray = attributeValue.split(',');
+                            selected = valuesArray.includes(value.id.toString()) ? 'selected' : '';
+                        }
                     } else {
-                        toastr.error(resp.message);
+                        // Tekli seçim
+                        selected = (attributeValue == value.id.toString()) ? 'selected' : '';
                     }
-                }).fail(()=>toastr.error("Detaylar yüklenirken hata oluştu."));
-        });
+                    html += `<option value="${value.id}" ${selected}>${value.name}</option>`;
+                });
+                html += '</select>';
+            }
+            html += `</div></div>`;
+        }
     });
 
-        function renderVariationSelects(itemContainer, existingVariant = null) {
-            // window.variationAttributes listesinde varianter özellikler var
-            itemContainer.empty();
-            window.variationAttributes.forEach(attr => {
-                console.log(attr.id);
-                let html = `<div class='mb-2'><label>${attr.name}</label>`;
-                html += `<select name="Variants[${itemContainer.index()}].VariationAttr_${attr.id}" class='form-control select2'>`;
-                html += "<option value=''>Seçiniz</option>";
-                attr.values.forEach(v => {
-                    let selected = existingVariant && existingVariant[`VariationAttr_${attr.id}`] == v.id ? "selected" : "";
-                    html += `<option value='${v.id}' ${selected}>${v.name}</option>`;
-                });
-                html += "</select></div>";
-                itemContainer.append(html);
-            });
+    html += '</div>';
+    $('#attributeContainer').html(html);
+    $('.select2').select2();
+}
+
+        function renderVariationAttributes(attributes) {
+            currentVariationAttributes = attributes.filter(attr => attr.varianter);
         }
+
+        // Sayfa yüklendiğinde mevcut varyasyonları yükle
+        $(document).ready(function () {
+
+            var categoryAttributes = @Html.Raw(Json.Serialize(Model.CategoryAttributes ?? new List<Pazaryeri.ViewModels.CategoryAttributeViewModel>()));
+    var attributeValues = @Html.Raw(Json.Serialize(Model.AttributeValues ?? new Dictionary<int, string>()));
+
+    console.log('CategoryAttributes:', categoryAttributes);
+    console.log('AttributeValues:', attributeValues);
+
+    // Eğer CategoryAttributes varsa, hemen render et
+    if (categoryAttributes && categoryAttributes.length > 0) {
+        renderAttributes(categoryAttributes, attributeValues);
+        updateVariationAttributes(categoryAttributes);
+    }
+
+           var initialVariants = @Html.Raw(Json.Serialize(Model?.Variants ?? new List<Pazaryeri.ViewModels.ProductVariantViewModel>()));
+
+            currentVariationAttributes = @Html.Raw(Json.Serialize(Model?.CategoryAttributes?.Where(a => a.Varianter) ?? new List<Pazaryeri.ViewModels.CategoryAttributeViewModel>()));
+
+            if (initialVariants && initialVariants.length > 0) {
+                initialVariants.forEach(function(variant) {
+                    addVariantEditor({
+                        tempId: variant.tempId,
+                        sku: variant.sku || '',
+                        price: variant.price || 0,
+                        stockQuantity: variant.stockQuantity || 0,
+                        barcode: variant.barcode || '',
+                        variationAttributes: variant.variationAttributes || {}
+                    });
+                });
+            } else {
+                setTimeout(function () {
+                    addVariantEditor();
+                }, 100);
+            }
+
+            //var categoryId = $('#restoreCategoryId').val();
+            //if (categoryId) {
+            //    loadCategoryAttributes(categoryId);
+            //}
+
+            // Varyasyonları restore et
+            //restoreVariants();
+
+            // Quill editor
+            var quill = new Quill("#editor", { theme: "snow" });
+
+            // Form submit
+            $("form").on("submit", function() {
+                $("#Description").val(quill.root.innerHTML);
+            });
+        });
+
+        @*function loadCategoryAttributes(categoryId) {
+        $.get('@Url.Action("GetCategoryAttributes")', { categoryId: categoryId })
+            .done(function(response) {
+                if (response.success) {
+                    renderAttributes(response.data.categoryAttributes);
+                    updateVariationAttributes(response.data.categoryAttributes);
+                }
+            });
+        }*@
+
+        //function restoreVariants() {
+        //    // Hidden field'dan varyasyon ID'lerini al
+        //    var variantIds = [];
+        //    $('input[name="VariantIds"]').each(function () {
+        //        var id = parseInt($(this).val());
+        //        if (!isNaN(id)) variantIds.push(id);
+        //    });
+
+        //    // Varyasyonları tekrar oluştur
+        //    variantIds.forEach(function (variantId) {
+        //        // Varyasyon verilerini form'dan oku
+        //        var sku = $('input[name="Variants[' + variantId + '].Sku"]').val();
+        //        var price = parseFloat($('input[name="Variants[' + variantId + '].Price"]').val()) || 0;
+        //        var stock = parseInt($('input[name="Variants[' + variantId + '].StockQuantity"]').val()) || 0;
+        //        var barcode = $('input[name="Variants[' + variantId + '].Barcode"]').val();
+
+        //        // Varyasyon özelliklerini oku
+        //        var variationAttributes = {};
+        //        $('select[name^="Variants[' + variantId + '].VariationAttributes["]').each(function () {
+        //            var name = $(this).attr('name');
+        //            var match = name.match(/VariationAttributes\[(\d+)\]/);
+        //            if (match) {
+        //                var attrId = parseInt(match[1]);
+        //                var value = $(this).val();
+        //                if (value) {
+        //                    variationAttributes[attrId] = parseInt(value);
+        //                }
+        //            }
+        //        });
+
+        //        // Varyasyonu ekle
+        //        addVariantEditor({
+        //            tempId: variantId,
+        //            sku: sku,
+        //            price: price,
+        //            stockQuantity: stock,
+        //            barcode: barcode,
+        //            variationAttributes: variationAttributes
+        //        });
+        //    });
+
+        //    // Eğer varyasyon yoksa varsayılan ekle
+        //    if (variantIds.length === 0) {
+        //        addVariantEditor();
+        //    }
+        //}
+
     </script>
 }

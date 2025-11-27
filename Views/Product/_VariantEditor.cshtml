@@ -1,0 +1,81 @@
+﻿@model Pazaryeri.ViewModels.ProductVariantViewModel
+
+<div class="variant-editor card mb-3" data-variant-id="@Model.TempId">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h6 class="mb-0">Varyasyon @Model.TempId</h6>
+        <button type="button" class="btn btn-sm btn-danger remove-variant">Kaldır</button>
+    </div>
+    <div class="card-body">
+        <input type="hidden" name="VariantIds" value="@Model.TempId" />
+
+        <!-- Varyasyon Özellikleri -->
+        <div class="variation-attributes mb-3">
+            @if (ViewBag.VariationAttributes != null)
+            {
+                var variationAttributes = ViewBag.VariationAttributes as List<Pazaryeri.ViewModels.CategoryAttributeViewModel>;
+                if (variationAttributes != null && variationAttributes.Any())
+                {
+                    foreach (var attr in variationAttributes)
+                    {
+                        <div class="form-group">
+                            <label>@attr.Name</label>
+                            <select name="Variants[@Model.TempId].VariationAttributes[@attr.Id]"
+                                    class="form-control variation-attribute-select">
+                                <option value="">Seçiniz</option>
+                                @foreach (var value in attr.Values)
+                                {
+                                    // Model'den seçili değeri kontrol et
+                                    var isSelected = Model.VariationAttributes != null &&
+                                                   Model.VariationAttributes.ContainsKey(attr.Id) &&
+                                                   Model.VariationAttributes[attr.Id] == value.Id;
+                                    <option value="@value.Id" selected="@isSelected">@value.Name</option>
+                                }
+                            </select>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <p class="text-muted">Varyasyon özelliği bulunmuyor</p>
+                }
+            }
+        </div>
+
+        <!-- Diğer varyasyon alanları aynı kalacak -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label>SKU *</label>
+                    <input type="text" name="Variants[@Model.TempId].Sku" value="@Model.Sku" class="form-control" required />
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label>Barkod</label>
+                    <input type="text" name="Variants[@Model.TempId].Barcode" value="@Model.Barcode" class="form-control" />
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label>Fiyat *</label>
+                    <input type="number" step="0.01" name="Variants[@Model.TempId].Price" value="@Model.Price" class="form-control" required />
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label>Stok *</label>
+                    <input type="number" name="Variants[@Model.TempId].StockQuantity" value="@Model.StockQuantity" class="form-control" required />
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label>Varyasyon Resimleri</label>
+                    <input type="file" name="Variants[@Model.TempId].ImageFiles" class="form-control" multiple accept="image/*" />
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -239,37 +239,6 @@ namespace Pazaryeri.Controllers
             return result;
         }
 
-        //private List<Models.CategoryAttribute> ConvertToCategoryAttributes(int categoryId, TrendyolCategoryAttributes attributes)
-        //{
-        //    var result = new List<Models.CategoryAttribute>();
-
-        //    foreach (var attribute in attributes.categoryAttributes)
-        //    {
-        //        var mainAttribute = new Models.CategoryAttribute
-        //        {
-        //            CategoryId = categoryId,
-        //            Platform = Platform.Trendyol
-        //        };
-        //        result.Add(mainAttribute);
-
-        //        if (attribute.attributeValues != null && attribute.attributeValues.Any())
-        //        {
-        //            foreach (var value in attribute.attributeValues)
-        //            {
-        //                var valueAttribute = new Models.CategoryAttribute
-        //                {
-        //                    CategoryId = categoryId,
-        //                    Platform = Platform.Trendyol
-        //                };
-        //                result.Add(valueAttribute);
-        //            }
-        //        }
-        //    }
-
-        //    return result;
-        //}
-
-
         private string GetPlatformDisplayName(Platform platform)
         {
             return platform switch

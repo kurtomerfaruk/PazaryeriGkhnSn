@@ -10,6 +10,7 @@ using Pazaryeri.Entity.Trendyol.Request;
 using Pazaryeri.Entity.Trendyol.Response;
 using Pazaryeri.Models;
 using Pazaryeri.Repositories.Interfaces;
+using Pazaryeri.Requests;
 using Pazaryeri.Services;
 using Pazaryeri.ViewModels;
 using System.Globalization;
@@ -172,7 +173,6 @@ namespace Pazaryeri.Controllers
                 return BadRequest(new { message = "Sadece Excel dosyaları (.xlsx, .xls) yükleyebilirsiniz." });
             }
 
-            // Dosya boyutu kontrolü (max 5MB)
             if (file.Length > 5 * 1024 * 1024)
             {
                 return BadRequest(new { message = "Dosya boyutu 5MB'tan büyük olamaz." });
@@ -227,90 +227,18 @@ namespace Pazaryeri.Controllers
         }
 
 
-        //[HttpGet]
-        //public async Task<IActionResult> Create()
-        //{
 
-        //    var model = new ProductViewModel();
-        //    model.Variants = new List<ProductVariantViewModel>
-        //    {
-        //        new ProductVariantViewModel()
-        //    };
-        //    await LoadBrandsAsync(model);
-        //    await LoadCategoriesAsync(model);
-        //    return View(model);
-        //}
-
-        //[HttpPost]
-        //[ValidateAntiForgeryToken]
-        //public async Task<IActionResult> Create(ProductViewModel model)
-        //{
-        //    // Dropdownları her zaman yükle
-        //    await LoadBrandsAsync(model);
-        //    await LoadCategoriesAsync(model);
-
-        //    // Model geçerli ise kaydet
-        //    if (ModelState.IsValid)
-        //    {
-        //        try
-        //        {
-        //            var product = await _productRepository.CreateProductAsync(model);
-
-        //            // Ürün resimleri
-        //            if (model.ImageFiles?.Any() == true)
-        //                await UploadProductImages(product.Id, model.ImageFiles);
-
-        //            // Varyasyon resimleri
-        //            foreach (var variant in model.Variants)
-        //            {
-        //                if (variant.ImageFiles?.Any() == true)
-        //                    await UploadVariantImages(variant.Id, variant.ImageFiles);
-        //            }
-
-        //            TempData["Success"] = "Ürün başarıyla oluşturuldu.";
-        //            return RedirectToAction("Index");
-        //        }
-        //        catch (Exception ex)
-        //        {
-        //            ModelState.AddModelError("", $"Ürün oluşturulurken hata oluştu: {ex.Message}");
-        //        }
-        //    }
-
-        //    // -----------------------------
-        //    // ModelState invalid → tekrar formu doldur
-        //    // -----------------------------
-
-        //    if (model.CategoryId != null)
-        //    {
-        //        var categoryDto = await _categoryRepository.GetCategoryWithAttributesAsync(model.CategoryId.Value);
-
-        //        model.CategoryAttributes = categoryDto.CategoryAttributes.Select(a => new CategoryAttributeViewModel
-        //        {
-        //            Id = a.Id,
-        //            Name = a.Name,
-        //            Varianter = a.Varianter,
-        //            AllowCustom = a.AllowCustom,
-        //            Required = a.Required,
-        //            AllowMultipleAttributeValues = a.AllowMultipleAttributeValues,
-        //            Values = a.Values.Select(v => new CategoryAttributeValueViewModel
-        //            {
-        //                Id = v.Id,
-        //                Name = v.Name
-        //            }).ToList()
-        //        }).ToList();
-
-        //        // Varyasyonları global JS array’e eklemek için
-        //        // <script> kısmında existingVariants = @Html.Raw(Json.Serialize(Model.Variants));
-        //    }
-
-        //    // Varyasyonlar zaten POST ile geldi → model.Variants değişmeden View’a döner
-        //    return View(model);
-        //}
 
         [HttpGet]
         public async Task<IActionResult> Create()
         {
-            var model = new ProductViewModel();
+            var model = new ProductViewModel
+            {
+                Variants = new List<ProductVariantViewModel>(),
+                CategoryAttributes = new List<CategoryAttributeViewModel>(),
+                AttributeValues = new Dictionary<int, string>(),
+                VariantIds = new List<int>()
+            };
             await LoadBrandsAsync(model);
             await LoadCategoriesAsync(model);
             return View(model);
@@ -327,18 +255,28 @@ namespace Pazaryeri.Controllers
             {
                 try
                 {
+                    // Varyasyonları geçici ID'lere göre işle
+                    if (model.VariantIds != null && model.VariantIds.Any())
+                    {
+                        model.Variants = model.VariantIds.Select(id =>
+                        {
+                            // Varyasyon verilerini formdan al
+                            return new ProductVariantViewModel
+                            {
+                                TempId = id,
+                                Sku = HttpContext.Request.Form[$"Variants[{id}].Sku"],
+                                Price = decimal.Parse(HttpContext.Request.Form[$"Variants[{id}].Price"]),
+                                StockQuantity = int.Parse(HttpContext.Request.Form[$"Variants[{id}].StockQuantity"]),
+                                Barcode = HttpContext.Request.Form[$"Variants[{id}].Barcode"],
+                                VariationAttributes = ParseVariationAttributes(HttpContext.Request.Form, id)
+                            };
+                        }).ToList();
+                    }
+
                     var product = await _productRepository.CreateProductAsync(model);
 
-                    // Ürün resimleri
                     if (model.ImageFiles?.Any() == true)
                         await UploadProductImages(product.Id, model.ImageFiles);
-
-                    // Varyasyon resimleri
-                    foreach (var variant in model.Variants)
-                    {
-                        if (variant.ImageFiles?.Any() == true)
-                            await UploadVariantImages(variant.Id, variant.ImageFiles);
-                    }
 
                     TempData["Success"] = "Ürün başarıyla oluşturuldu.";
                     return RedirectToAction("Index");
@@ -346,11 +284,47 @@ namespace Pazaryeri.Controllers
                 catch (Exception ex)
                 {
                     ModelState.AddModelError("", $"Ürün oluşturulurken hata oluştu: {ex.Message}");
+                    _logger.LogError(ex, "Ürün oluşturulurken hata oluştu");
                 }
             }
 
-            // ModelState invalid → kategori özelliklerini yeniden yükle
-            if (model.CategoryId != null)
+
+            await RestoreVariantsFromRequest(model);
+
+            // ModelState invalid ise mevcut verileri koru
+            //if (model.CategoryId != null)
+            //{
+            //    var categoryDto = await _categoryRepository.GetCategoryWithAttributesAsync(model.CategoryId.Value);
+            //    model.CategoryAttributes = categoryDto.CategoryAttributes.Select(a => new CategoryAttributeViewModel
+            //    {
+            //        Id = a.Id,
+            //        Name = a.Name,
+            //        Varianter = a.Varianter,
+            //        AllowCustom = a.AllowCustom,
+            //        Required = a.Required,
+            //        AllowMultipleAttributeValues = a.AllowMultipleAttributeValues,
+            //        Values = a.Values.Select(v => new CategoryAttributeValueViewModel
+            //        {
+            //            Id = v.Id,
+            //            Name = v.Name
+            //        }).ToList()
+            //    }).ToList();
+            //}
+
+            //if (model.CategoryId.HasValue)
+            //{
+            //    await LoadCategoryAttributes(model);
+            //}
+
+            await RestoreModelData(model);
+
+            return View(model);
+        }
+
+        private async Task RestoreModelData(ProductViewModel model)
+        {
+            // 1. ÖNCE kategori attribute'larını yükle - BU ÇOK ÖNEMLİ
+            if (model.CategoryId.HasValue)
             {
                 var categoryDto = await _categoryRepository.GetCategoryWithAttributesAsync(model.CategoryId.Value);
                 model.CategoryAttributes = categoryDto.CategoryAttributes.Select(a => new CategoryAttributeViewModel
@@ -369,7 +343,179 @@ namespace Pazaryeri.Controllers
                 }).ToList();
             }
 
-            return View(model);
+            // 2. Varyasyonları geri yükle
+            model.Variants = new List<ProductVariantViewModel>();
+            model.VariantIds = new List<int>();
+
+            var variantIdsValues = HttpContext.Request.Form["VariantIds"];
+            if (!string.IsNullOrEmpty(variantIdsValues))
+            {
+                foreach (var variantIdStr in variantIdsValues)
+                {
+                    if (int.TryParse(variantIdStr, out int variantId))
+                    {
+                        model.VariantIds.Add(variantId);
+                        var variant = new ProductVariantViewModel
+                        {
+                            TempId = variantId,
+                            Sku = HttpContext.Request.Form[$"Variants[{variantId}].Sku"],
+                            Price = decimal.TryParse(HttpContext.Request.Form[$"Variants[{variantId}].Price"], out decimal price) ? price : 0,
+                            StockQuantity = int.TryParse(HttpContext.Request.Form[$"Variants[{variantId}].StockQuantity"], out int stock) ? stock : 0,
+                            Barcode = HttpContext.Request.Form[$"Variants[{variantId}].Barcode"],
+                            VariationAttributes = new Dictionary<int, int>()
+                        };
+
+                        // Varyasyon attribute'larını geri yükle
+                        foreach (var key in HttpContext.Request.Form.Keys)
+                        {
+                            if (key.StartsWith($"Variants[{variantId}].VariationAttributes["))
+                            {
+                                var attrMatch = System.Text.RegularExpressions.Regex.Match(key, @"VariationAttributes\[(\d+)\]");
+                                if (attrMatch.Success && int.TryParse(attrMatch.Groups[1].Value, out int attrId))
+                                {
+                                    if (int.TryParse(HttpContext.Request.Form[key], out int attrValueId))
+                                    {
+                                        variant.VariationAttributes[attrId] = attrValueId;
+                                    }
+                                }
+                            }
+                        }
+                        model.Variants.Add(variant);
+                    }
+                }
+            }
+
+            // 3. Normal attribute'ları geri yükle
+            model.AttributeValues = new Dictionary<int, string>();
+            foreach (var key in HttpContext.Request.Form.Keys)
+            {
+                if (key.StartsWith("AttributeValues["))
+                {
+                    var attrMatch = System.Text.RegularExpressions.Regex.Match(key, @"AttributeValues\[(\d+)\]");
+                    if (attrMatch.Success && int.TryParse(attrMatch.Groups[1].Value, out int attrId))
+                    {
+                        model.AttributeValues[attrId] = HttpContext.Request.Form[key];
+                    }
+                }
+            }
+        }
+
+        private async Task RestoreVariantsFromRequest(ProductViewModel model)
+        {
+            try
+            {
+                model.Variants = new List<ProductVariantViewModel>();
+                model.VariantIds = new List<int>();
+
+                // Form'dan VariantIds'leri oku
+                var variantIdsValues = HttpContext.Request.Form["VariantIds"];
+                if (!string.IsNullOrEmpty(variantIdsValues))
+                {
+                    foreach (var variantIdStr in variantIdsValues)
+                    {
+                        if (int.TryParse(variantIdStr, out int variantId))
+                        {
+                            model.VariantIds.Add(variantId);
+
+                            var variant = new ProductVariantViewModel
+                            {
+                                TempId = variantId,
+                                Sku = HttpContext.Request.Form[$"Variants[{variantId}].Sku"],
+                                Price = decimal.TryParse(HttpContext.Request.Form[$"Variants[{variantId}].Price"], out decimal price) ? price : 0,
+                                StockQuantity = int.TryParse(HttpContext.Request.Form[$"Variants[{variantId}].StockQuantity"], out int stock) ? stock : 0,
+                                Barcode = HttpContext.Request.Form[$"Variants[{variantId}].Barcode"],
+                                VariationAttributes = new Dictionary<int, int>()
+                            };
+
+                            // Varyasyon özelliklerini oku
+                            foreach (var key in HttpContext.Request.Form.Keys)
+                            {
+                                if (key.StartsWith($"Variants[{variantId}].VariationAttributes["))
+                                {
+                                    var attrMatch = System.Text.RegularExpressions.Regex.Match(key, @"VariationAttributes\[(\d+)\]");
+                                    if (attrMatch.Success && int.TryParse(attrMatch.Groups[1].Value, out int attrId))
+                                    {
+                                        if (int.TryParse(HttpContext.Request.Form[key], out int attrValueId))
+                                        {
+                                            variant.VariationAttributes[attrId] = attrValueId;
+                                        }
+                                    }
+                                }
+                            }
+
+                            model.Variants.Add(variant);
+                        }
+                    }
+                }
+
+                // Attribute değerlerini oku
+                model.AttributeValues = new Dictionary<int, string>();
+                foreach (var key in HttpContext.Request.Form.Keys)
+                {
+                    if (key.StartsWith("AttributeValues["))
+                    {
+                        var attrMatch = System.Text.RegularExpressions.Regex.Match(key, @"AttributeValues\[(\d+)\]");
+                        if (attrMatch.Success && int.TryParse(attrMatch.Groups[1].Value, out int attrId))
+                        {
+                            model.AttributeValues[attrId] = HttpContext.Request.Form[key];
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Varyasyon verileri geri yüklenirken hata oluştu");
+            }
+        }
+
+        private async Task LoadCategoryAttributes(ProductViewModel model)
+        {
+            try
+            {
+                var categoryDto = await _categoryRepository.GetCategoryWithAttributesAsync(model.CategoryId.Value);
+                model.CategoryAttributes = categoryDto.CategoryAttributes.Select(a => new CategoryAttributeViewModel
+                {
+                    Id = a.Id,
+                    Name = a.Name,
+                    Varianter = a.Varianter,
+                    AllowCustom = a.AllowCustom,
+                    Required = a.Required,
+                    AllowMultipleAttributeValues = a.AllowMultipleAttributeValues,
+                    Values = a.Values.Select(v => new CategoryAttributeValueViewModel
+                    {
+                        Id = v.Id,
+                        Name = v.Name
+                    }).ToList()
+                }).ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Kategori özellikleri yüklenirken hata oluştu");
+                model.CategoryAttributes = new List<CategoryAttributeViewModel>();
+            }
+        }
+
+
+        private Dictionary<int, int> ParseVariationAttributes(IFormCollection form, int variantId)
+        {
+            var attributes = new Dictionary<int, int>();
+
+            foreach (var key in form.Keys)
+            {
+                if (key.StartsWith($"Variants[{variantId}].VariationAttributes["))
+                {
+                    var match = System.Text.RegularExpressions.Regex.Match(key, @"VariationAttributes\[(\d+)\]");
+                    if (match.Success && int.TryParse(match.Groups[1].Value, out int attrId))
+                    {
+                        if (int.TryParse(form[key], out int valueId))
+                        {
+                            attributes[attrId] = valueId;
+                        }
+                    }
+                }
+            }
+
+            return attributes;
         }
 
         [HttpGet]
@@ -397,16 +543,13 @@ namespace Pazaryeri.Controllers
             {
                 try
                 {
-                    // Ürünü güncelle
                     var product = await _productRepository.UpdateProductAsync(model);
 
-                    // Yeni resimleri yükle
                     if (model.ImageFiles?.Any() == true)
                     {
                         await UploadProductImages(product.Id, model.ImageFiles);
                     }
 
-                    // Trendyol'da güncelle
                     //var trendyolResult = await _trendyolService.UpdateProductAsync(product);
 
                     TempData["Success"] = "Ürün başarıyla güncellendi.";
@@ -474,15 +617,6 @@ namespace Pazaryeri.Controllers
             };
         }
 
-        //[HttpPost]
-        //[ValidateAntiForgeryToken]
-        //public IActionResult AddVariant([FromBody] ProductViewModel model)
-        //{
-        //    model.Variants ??= new List<ProductVariantViewModel>();
-        //    model.Variants.Add(new ProductVariantViewModel());
-
-        //    return PartialView("_VariantPartial", model);
-        //}
 
         [HttpPost]
         public async Task<IActionResult> AddVariant([FromForm] ProductViewModel model)
@@ -511,7 +645,6 @@ namespace Pazaryeri.Controllers
                 Text = b.Name
             }).ToList();
 
-            // Boş seçenek ekle
             model.Brands.Insert(0, new SelectListItem
             {
                 Value = "",
@@ -540,7 +673,6 @@ namespace Pazaryeri.Controllers
         [HttpGet]
         public async Task<IActionResult> GetCategoryAttributes(int categoryId)
         {
-            // Örnek: TrendyolService ile çekiyoruz
             CategoryDto categoryDto = await _categoryRepository.GetCategoryWithAttributesAsync(categoryId);
 
             if (categoryDto == null) return NotFound();
@@ -550,6 +682,30 @@ namespace Pazaryeri.Controllers
                 success = true,
                 data = categoryDto
             });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> GetVariantEditor([FromBody] VariantEditorRequest request)
+        {
+            try
+            {
+                request ??= new VariantEditorRequest();
+
+                var variant = request.VariantData ?? new ProductVariantViewModel();
+                variant.TempId = request.TempId > 0 ? request.TempId : 1;
+
+                var variationAttributes = request.VariationAttributes ?? new List<CategoryAttributeViewModel>();
+
+                ViewBag.VariationAttributes = variationAttributes;
+                return PartialView("_VariantEditor", variant);
+            }
+            catch (Exception ex)
+            {
+                var emptyVariant = new ProductVariantViewModel { TempId = 1 };
+                ViewBag.VariationAttributes = new List<CategoryAttributeViewModel>();
+                return PartialView("_VariantEditor", emptyVariant);
+            }
         }
 
         private string GetPlatformDisplayName(Platform platform)

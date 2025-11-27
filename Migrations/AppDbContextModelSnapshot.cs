@@ -119,16 +119,13 @@ namespace Pazaryeri.Migrations
 
             modelBuilder.Entity("Pazaryeri.Models.CategoryAttributeValue", b =>
                 {
-                    b.Property<long>("Id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+                        .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<long>("CategoryAttributeId")
-                        .HasColumnType("bigint");
-
-                    b.Property<int?>("CategoryAttributeId1")
+                    b.Property<int>("CategoryAttributeId")
                         .HasColumnType("int");
 
                     b.Property<int>("CategoryAttributeValueId")
@@ -139,7 +136,7 @@ namespace Pazaryeri.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CategoryAttributeId1");
+                    b.HasIndex("CategoryAttributeId");
 
                     b.ToTable("CategoryAttributeValue");
                 });
@@ -222,9 +219,6 @@ namespace Pazaryeri.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Barcode")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<int>("BrandId")
                         .HasColumnType("int");
 
@@ -269,6 +263,30 @@ namespace Pazaryeri.Migrations
                     b.ToTable("Products");
                 });
 
+            modelBuilder.Entity("Pazaryeri.Models.ProductAttribute", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AttributeId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Value")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("ProductAttributes");
+                });
+
             modelBuilder.Entity("Pazaryeri.Models.ProductImage", b =>
                 {
                     b.Property<int>("Id")
@@ -305,16 +323,6 @@ namespace Pazaryeri.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("AttributeType")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("AttributeValue")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
                     b.Property<string>("Barcode")
                         .HasColumnType("nvarchar(max)");
 
@@ -335,6 +343,30 @@ namespace Pazaryeri.Migrations
                     b.HasIndex("ProductId");
 
                     b.ToTable("ProductVariants");
+                });
+
+            modelBuilder.Entity("Pazaryeri.Models.ProductVariantAttribute", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AttributeId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("AttributeValueId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("VariantId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("VariantId");
+
+                    b.ToTable("ProductVariantAttributes");
                 });
 
             modelBuilder.Entity("Pazaryeri.Models.ProductVariantImage", b =>
@@ -749,7 +781,9 @@ namespace Pazaryeri.Migrations
                 {
                     b.HasOne("Pazaryeri.Models.CategoryAttribute", "CategoryAttribute")
                         .WithMany("Values")
-                        .HasForeignKey("CategoryAttributeId1");
+                        .HasForeignKey("CategoryAttributeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("CategoryAttribute");
                 });
@@ -773,6 +807,17 @@ namespace Pazaryeri.Migrations
                     b.Navigation("Category");
                 });
 
+            modelBuilder.Entity("Pazaryeri.Models.ProductAttribute", b =>
+                {
+                    b.HasOne("Pazaryeri.Models.Product", "Product")
+                        .WithMany("Attributes")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+                });
+
             modelBuilder.Entity("Pazaryeri.Models.ProductImage", b =>
                 {
                     b.HasOne("Pazaryeri.Models.Product", "Product")
@@ -793,6 +838,17 @@ namespace Pazaryeri.Migrations
                         .IsRequired();
 
                     b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("Pazaryeri.Models.ProductVariantAttribute", b =>
+                {
+                    b.HasOne("Pazaryeri.Models.ProductVariant", "Variant")
+                        .WithMany("VariantAttributes")
+                        .HasForeignKey("VariantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Variant");
                 });
 
             modelBuilder.Entity("Pazaryeri.Models.ProductVariantImage", b =>
@@ -898,6 +954,8 @@ namespace Pazaryeri.Migrations
 
             modelBuilder.Entity("Pazaryeri.Models.Product", b =>
                 {
+                    b.Navigation("Attributes");
+
                     b.Navigation("Images");
 
                     b.Navigation("Variants");
@@ -905,6 +963,8 @@ namespace Pazaryeri.Migrations
 
             modelBuilder.Entity("Pazaryeri.Models.ProductVariant", b =>
                 {
+                    b.Navigation("VariantAttributes");
+
                     b.Navigation("VariantImages");
                 });
 
