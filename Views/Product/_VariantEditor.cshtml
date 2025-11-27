@@ -24,7 +24,6 @@
                                 <option value="">Seçiniz</option>
                                 @foreach (var value in attr.Values)
                                 {
-                                    // Model'den seçili değeri kontrol et
                                     var isSelected = Model.VariationAttributes != null &&
                                                    Model.VariationAttributes.ContainsKey(attr.Id) &&
                                                    Model.VariationAttributes[attr.Id] == value.Id;
@@ -74,6 +73,18 @@
                 <div class="form-group">
                     <label>Varyasyon Resimleri</label>
                     <input type="file" name="Variants[@Model.TempId].ImageFiles" class="form-control" multiple accept="image/*" />
+                    <div class="variant-image-preview mt-2">
+                        <!-- Mevcut resimler gösterilecek -->
+                        @if (Model.ExistingImages != null && Model.ExistingImages.Any())
+                        {
+                            foreach (var imageUrl in Model.ExistingImages)
+                            {
+                                <div class="image-preview-item mb-2">
+                                    <img src="@imageUrl" alt="Preview" style="max-width: 80px; max-height: 80px;" class="img-thumbnail" />
+                                </div>
+                            }
+                        }
+                    </div>
                 </div>
             </div>
         </div>

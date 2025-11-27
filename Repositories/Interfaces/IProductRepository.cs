@@ -21,5 +21,7 @@ namespace Pazaryeri.Repositories.Interfaces
         Task<bool> ProductCodeExistsAsync(string productCode, int? excludeId = null);
         Task SetMainImageAsync(int imageId);
         Task DeleteImageAsync(int imageId);
+        Task<List<ProductVariant>> GetVariantsByProductIdAsync(int productId);
+        Task<ProductVariant>  GetVariantByTempIdAsync(int tempId);
     }
 }

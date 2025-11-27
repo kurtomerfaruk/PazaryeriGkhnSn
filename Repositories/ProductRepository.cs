@@ -35,8 +35,7 @@ namespace Pazaryeri.Repositories
 
         public async Task<Product> GetByIdAsync(int id)
         {
-            return await _context.Products
-                 .FirstOrDefaultAsync(o => o.Id == id);
+            return await _context.Products.FirstOrDefaultAsync(o => o.Id == id);
         }
 
         public async Task<(List<Product> Products, int TotalCount)> GetPagedProductsAsync(int start, int length, string search, string sortColumn, string sortDirection)
@@ -513,10 +512,9 @@ namespace Pazaryeri.Repositories
         {
             return await _context.Products
             .Include(p => p.Images)
-            .Include(p => p.Variants)
-                .ThenInclude(v => v.VariantImages)
+            .Include(p => p.Variants).ThenInclude(v => v.VariantImages)
             .Include(p => p.Variants).ThenInclude(c => c.VariantAttributes)
-             .Include(p => p.Attributes)
+            .Include(p => p.Attributes)
             .FirstOrDefaultAsync(p => p.Id == id);
         }
 
@@ -549,23 +547,7 @@ namespace Pazaryeri.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task AddVariantImageAsync(int variantId, string imageUrl)
-        {
-            var variant = await _context.ProductVariants.FindAsync(variantId);
-            if (variant == null)
-            {
-                throw new ArgumentException("Varyasyon bulunamadı.");
-            }
 
-            var variantImage = new ProductVariantImage
-            {
-                ProductVariantId = variantId,
-                ImageUrl = imageUrl
-            };
-
-            _context.ProductVariantImages.Add(variantImage);
-            await _context.SaveChangesAsync();
-        }
 
         public async Task DeleteProductAsync(int id)
         {
@@ -646,6 +628,37 @@ namespace Pazaryeri.Repositories
                 await transaction.RollbackAsync();
                 throw;
             }
+        }
+
+        public async Task<List<ProductVariant>> GetVariantsByProductIdAsync(int productId)
+        {
+            return await _context.ProductVariants
+                .Where(v => v.ProductId == productId)
+                .ToListAsync();
+        }
+
+        public async Task AddVariantImageAsync(int variantId, string imageUrl)
+        {
+            var variant = await _context.ProductVariants.FindAsync(variantId);
+            if (variant == null)
+            {
+                throw new ArgumentException("Varyasyon bulunamadı.");
+            }
+
+            var variantImage = new ProductVariantImage
+            {
+                ProductVariantId = variantId,
+                ImageUrl = imageUrl,
+                CreatedDate = DateTime.Now
+            };
+
+            _context.ProductVariantImages.Add(variantImage);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<ProductVariant> GetVariantByTempIdAsync(int tempId)
+        {
+            return await _context.ProductVariants.Include(c=>c.VariantImages).FirstOrDefaultAsync(p => p.TempId == tempId); ;
         }
     }
 }

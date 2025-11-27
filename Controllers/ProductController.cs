@@ -272,6 +272,8 @@ namespace Pazaryeri.Controllers
                     if (model.ImageFiles?.Any() == true)
                         await UploadProductImages(product.Id, model.ImageFiles);
 
+                    await UploadVariantImages(product.Id, model);
+
                     TempData["Success"] = "Ürün başarıyla oluşturuldu.";
                     return RedirectToAction("Index");
                 }
@@ -591,6 +593,8 @@ namespace Pazaryeri.Controllers
                     // Güncelleme işlemi
                     var product = await _productRepository.UpdateProductAsync(model);
 
+                    await UploadVariantImages(product.Id, model);
+
                     TempData["Success"] = "Ürün başarıyla güncellendi.";
                     return RedirectToAction("Index");
                 }
@@ -618,15 +622,43 @@ namespace Pazaryeri.Controllers
             }
         }
 
-        private async Task UploadVariantImages(int variantId, List<IFormFile> imageFiles)
+        private async Task UploadVariantImages(int productId, ProductViewModel model)
         {
-            foreach (var file in imageFiles)
+            try
             {
-                if (file.Length > 0)
+                // ProductId'ye göre varyasyonları bul
+                var variants = await _productRepository.GetVariantsByProductIdAsync(productId);
+
+                foreach (var variant in variants)
                 {
-                    var imageUrl = await _imageRepository.UploadImageAsync(file);
-                    await _productRepository.AddVariantImageAsync(variantId, imageUrl);
+                    // Bu varyasyon için dosyaları bul
+                    var variantFiles = HttpContext.Request.Form.Files
+                        .Where(f => f.Name.StartsWith($"Variants[{variant.TempId}].ImageFiles"))
+                        .ToList();
+
+                    if (variantFiles.Any())
+                    {
+                        foreach (var file in variantFiles)
+                        {
+                            if (file.Length > 0)
+                            {
+                                // Resmi yükle ve URL'sini al
+                                var imageUrl = await _imageRepository.UploadImageAsync(file);
+
+                                // Varyasyon resmini veritabanına kaydet
+                                await _productRepository.AddVariantImageAsync(variant.Id, imageUrl);
+
+                                _logger.LogInformation("Varyasyon resmi yüklendi: VariantId: {VariantId}, Image: {ImageUrl}",
+                                    variant.Id, imageUrl);
+                            }
+                        }
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Varyasyon resimleri yüklenirken hata oluştu");
+                throw;
             }
         }
 
@@ -636,13 +668,15 @@ namespace Pazaryeri.Controllers
             {
                 Id = product.Id,
                 ProductCode = product.ProductCode,
-                ProductMainId=product.ProductMainId,
+                ProductMainId = product.ProductMainId,
                 Title = product.Title,
                 Description = product.Description,
                 Price = product.Price,
                 StockQuantity = product.StockQuantity,
                 BrandId = product.BrandId,
                 CategoryId = product.CategoryId,
+                TempProductImageUrls = product.Images.Select(c => c.ImageUrl).ToList(),
+                TempVariantImageUrls = product.Variants.SelectMany(v => v.VariantImages).GroupBy(vi => vi.ProductVariantId).ToDictionary(g => g.Key, g => g.Select(c => c.ImageUrl).ToList()),
                 ExistingImages = product.Images.Select(i => new ProductImageViewModel
                 {
                     Id = i.Id,
@@ -661,7 +695,7 @@ namespace Pazaryeri.Controllers
                     ExistingImages = v.VariantImages.Select(vi => vi.ImageUrl).ToList(),
                     VariationAttributes = v.VariantAttributes.ToDictionary(va => va.AttributeId, va => va.AttributeValueId)
                 }).ToList(),
-                AttributeValues = product.Attributes.ToDictionary(a=>a.AttributeId,a=>a.Value ?? "")
+                AttributeValues = product.Attributes.ToDictionary(a => a.AttributeId, a => a.Value ?? "")
             };
         }
 
@@ -742,6 +776,12 @@ namespace Pazaryeri.Controllers
 
                 var variant = request.VariantData ?? new ProductVariantViewModel();
                 variant.TempId = request.TempId > 0 ? request.TempId : 1;
+
+                ProductVariant productVariant = await _productRepository.GetVariantByTempIdAsync(variant.TempId);
+                if (productVariant != null)
+                {
+                    variant.ExistingImages=productVariant.VariantImages.Select(c=>c.ImageUrl).ToList();
+                }
 
                 var variationAttributes = request.VariationAttributes ?? new List<CategoryAttributeViewModel>();
 
