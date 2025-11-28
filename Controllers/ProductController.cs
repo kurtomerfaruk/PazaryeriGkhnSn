@@ -1,7 +1,10 @@
 ﻿using ClosedXML.Excel;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Newtonsoft.Json;
 using Pazaryeri.Dtos;
+using Pazaryeri.Entity.Trendyol;
+using Pazaryeri.Entity.Trendyol.Products;
 using Pazaryeri.Entity.Trendyol.Request;
 using Pazaryeri.Entity.Trendyol.Response;
 using Pazaryeri.Models;
@@ -20,7 +23,9 @@ namespace Pazaryeri.Controllers
         private readonly IImageRepository _imageRepository;
         private readonly IBrandRepository _brandRepository;
         private readonly ICategoryRepository _categoryRepository;
-        private readonly ITrendyolProductDetailRepository _trendyolProductDetailRepository;
+        private readonly ICategoryAttributeRepository _categoryAttributeRepository;
+        private readonly ICategoryAttributeValueRepository _categoryAttributeValueRepository;
+        //private readonly ITrendyolProductDetailRepository _trendyolProductDetailRepository;
         private readonly IPlatformServiceFactory _platformServiceFactory;
         private readonly ILogger<ProductController> _logger;
         private readonly IConfiguration _configuration;
@@ -29,19 +34,21 @@ namespace Pazaryeri.Controllers
             IImageRepository imageRepository,
             IBrandRepository brandRepository,
             ICategoryRepository categoryRepository,
+            ICategoryAttributeRepository categoryAttributeRepository,
+            ICategoryAttributeValueRepository categoryAttributeValueRepository,
             IPlatformServiceFactory platformServiceFactory,
             ILogger<ProductController> logger,
-            IConfiguration configuration,
-            ITrendyolProductDetailRepository trendyolProductDetailRepository)
+            IConfiguration configuration)
         {
             _productRepository = productRepository;
             _imageRepository = imageRepository;
             _brandRepository = brandRepository;
             _categoryRepository = categoryRepository;
+            _categoryAttributeRepository = categoryAttributeRepository;
+            _categoryAttributeValueRepository = categoryAttributeValueRepository;
             _platformServiceFactory = platformServiceFactory;
             _logger = logger;
             _configuration = configuration;
-            _trendyolProductDetailRepository = trendyolProductDetailRepository;
         }
         public IActionResult Index()
         {
@@ -94,32 +101,173 @@ namespace Pazaryeri.Controllers
         [HttpPost]
         public async Task<IActionResult> FetchTrendyolProducts()
         {
-            try
-            {
-                var trendyolService = _platformServiceFactory.GetTrendyolService();
-                var productGroups = await trendyolService.GetGroupedProductsAsync();
-                int addedProducts = 0;
-                int updatedProducts = 0;
-                int addedDetails = 0;
-                int updatedDetails = 0;
+            //try
+            //{
+            //    var trendyolService = _platformServiceFactory.GetTrendyolService();
+            //    var productGroups = await trendyolService.GetGroupedProductsAsync();
+            //    int addedProducts = 0;
+            //    int updatedProducts = 0;
+            //    int addedDetails = 0;
+            //    int updatedDetails = 0;
 
-                await _productRepository.SaveGroup(productGroups);
+            //    await _productRepository.SaveGroup(productGroups);
+
+            //    return Json(new
+            //    {
+            //        success = true,
+            //        message = $"Trendyol için {addedProducts} yeni ürün eklendi, {updatedProducts} ürün güncellendi. " +
+            //                 $"{addedDetails} yeni detay eklendi, {updatedDetails} detay güncellendi."
+            //    });
+            //}
+            //catch (Exception ex)
+            //{
+            //    return Json(new
+            //    {
+            //        success = false,
+            //        message = $"Trendyol ürünleri çekilirken hata: {ex.Message}"
+            //    });
+            //}
+
+            return Json(new
+            {
+                success = false,
+                message = $"Trendyol ürünleri çekilirken hata: "
+            });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SendTrendyol(int id)
+        {
+            var product = await _productRepository.GetProductByIdAsync(id);
+            if (product == null)
+            {
+                return NotFound();
+            }
+
+            var model = MapToTrendyolProductResponse(product);
+
+            var trendyolService = _platformServiceFactory.GetTrendyolService();
+            TrendyolResult createProductResponse = await trendyolService.CreateProduct(model);
+
+
+            if (createProductResponse.IsSuccess)
+            {
+                var batchResponse = await trendyolService.CreateProductBatchResult(createProductResponse.Success.batchRequestId);
+                string successMessage = "Ürün gönderme durumu : "+batchResponse.status;
+                if (batchResponse.items.Count > 0)
+                {
+                    foreach (var item in batchResponse.items)
+                    {
+                        successMessage += "Ürün Sonuç Durumu :" + item.status+"\n";
+                        if (item.failureReasons.Count > 0)
+                        {
+                            int count = 0;
+                           
+                            foreach (var reason in item.failureReasons)
+                            {
+                                count++;
+                                successMessage += "Hata" + count + ":"+reason;
+                            }
+                        }
+                    }
+                }
 
                 return Json(new
                 {
                     success = true,
-                    message = $"Trendyol için {addedProducts} yeni ürün eklendi, {updatedProducts} ürün güncellendi. " +
-                             $"{addedDetails} yeni detay eklendi, {updatedDetails} detay güncellendi."
+                    message = successMessage
                 });
             }
-            catch (Exception ex)
+
+            string resultMessage = "";
+
+            foreach (var item in createProductResponse.Error.errors)
             {
-                return Json(new
-                {
-                    success = false,
-                    message = $"Trendyol ürünleri çekilirken hata: {ex.Message}"
-                });
+                resultMessage += item.message;
             }
+
+            return Json(new
+            {
+                success = false,
+                message = resultMessage
+            });
+        }
+
+        private async Task<TrendyolProductItemsResponse> MapToTrendyolProductResponse(Product product)
+        {
+
+            List<TrendyolProductResponse> responses = new List<TrendyolProductResponse>();
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
+
+            foreach (var item in product.Variants)
+            {
+                TrendyolProductResponse response = new TrendyolProductResponse
+                {
+                    barcode = item.Barcode,
+                    title = product.Title,
+                    productMainId = product.ProductMainId,
+                    brandId = product.Brand.BrandId,
+                    categoryId = product.Category.CategoryId,
+                    quantity = item.StockQuantity,
+                    stockCode = item.Sku,
+                    dimensionalWeight = 2,
+                    description = product.Description,
+                    listPrice = decimal.ToDouble(item.ListPrice),
+                    salePrice = decimal.ToDouble(item.SalePrice),
+                    cargoCompanyId = product.TrendyolCargoId,
+                    images = item.VariantImages.Select(c => new Image
+                    {
+                        url = baseUrl+c.ImageUrl
+                    }).ToList(),
+
+                };
+                
+                foreach (var variantAttribute in item.VariantAttributes)
+                {
+                    CategoryAttributeValue value = await _categoryAttributeValueRepository.GetByIdAsync(variantAttribute.AttributeValueId);
+                    Entity.Trendyol.Products.Attribute attribute = new Entity.Trendyol.Products.Attribute
+                    {
+                        attributeId = value.CategoryAttribute.CategoryAttributeId,
+                        attributeValueId = value.CategoryAttributeValueId
+                    };
+                    response.attributes.Add(attribute);
+                }
+
+                foreach (var attr in product.Attributes)
+                {
+                    if(string.IsNullOrEmpty(attr.Value)) continue;
+                    if(int.TryParse(attr.Value,out int intValue))
+                    {
+                        CategoryAttributeValue value = await _categoryAttributeValueRepository.GetByIdAsync(intValue);
+                        Entity.Trendyol.Products.Attribute attribute = new Entity.Trendyol.Products.Attribute
+                        {
+                            attributeId = value.CategoryAttribute.CategoryAttributeId,
+                            attributeValueId = value.CategoryAttributeValueId
+                        };
+                        response.attributes.Add(attribute);
+                    }
+                    else
+                    {
+                        CategoryAttribute categoryAttribute=await _categoryAttributeRepository.GetByIdAsync(attr.AttributeId);
+                        Entity.Trendyol.Products.Attribute attribute = new Entity.Trendyol.Products.Attribute
+                        {
+                            attributeId = categoryAttribute.CategoryAttributeId,
+                            customAttributeValue = attr.Value
+                        };
+                        response.attributes.Add(attribute);
+                    }
+                }
+
+                responses.Add(response);
+            }
+
+            return new TrendyolProductItemsResponse
+            {
+                items = responses
+            };
+
+
+
         }
 
         [HttpGet]
@@ -205,7 +353,7 @@ namespace Pazaryeri.Controllers
 
             if (result != null)
             {
-                StockPriceBatchResponse batchResponse = await trendyolService.UpdateStockPriceBatchResult(result.batchRequestId);
+                BatchResponse batchResponse = await trendyolService.UpdateStockPriceBatchResult(result.batchRequestId);
                 return Ok(new
                 {
                     message = $"{stockPriceList.Count} ürün başarıyla güncellendi.",
@@ -222,9 +370,6 @@ namespace Pazaryeri.Controllers
             });
         }
 
-
-
-
         [HttpGet]
         public async Task<IActionResult> Create()
         {
@@ -237,6 +382,7 @@ namespace Pazaryeri.Controllers
             };
             await LoadBrandsAsync(model);
             await LoadCategoriesAsync(model);
+            await LoadTrendyolCargos(model);
             return View(model);
         }
 
@@ -246,6 +392,7 @@ namespace Pazaryeri.Controllers
         {
             await LoadBrandsAsync(model);
             await LoadCategoriesAsync(model);
+            await LoadTrendyolCargos(model);
 
             if (ModelState.IsValid)
             {
@@ -259,7 +406,8 @@ namespace Pazaryeri.Controllers
                             {
                                 TempId = id,
                                 Sku = HttpContext.Request.Form[$"Variants[{id}].Sku"],
-                                Price = decimal.Parse(HttpContext.Request.Form[$"Variants[{id}].Price"]),
+                                ListPrice = decimal.Parse(HttpContext.Request.Form[$"Variants[{id}].ListPrice"]),
+                                SalePrice = decimal.Parse(HttpContext.Request.Form[$"Variants[{id}].SalePrice"]),
                                 StockQuantity = int.Parse(HttpContext.Request.Form[$"Variants[{id}].StockQuantity"]),
                                 Barcode = HttpContext.Request.Form[$"Variants[{id}].Barcode"],
                                 VariationAttributes = ParseVariationAttributes(HttpContext.Request.Form, id)
@@ -294,7 +442,6 @@ namespace Pazaryeri.Controllers
 
         private async Task RestoreModelData(ProductViewModel model)
         {
-            // 1. ÖNCE kategori attribute'larını yükle
             if (model.CategoryId.HasValue)
             {
                 var categoryDto = await _categoryRepository.GetCategoryWithAttributesAsync(model.CategoryId.Value);
@@ -314,7 +461,6 @@ namespace Pazaryeri.Controllers
                 }).ToList();
             }
 
-            // 2. Varyasyonları geri yükle
             model.Variants = new List<ProductVariantViewModel>();
             model.VariantIds = new List<int>();
 
@@ -330,13 +476,13 @@ namespace Pazaryeri.Controllers
                         {
                             TempId = variantId,
                             Sku = HttpContext.Request.Form[$"Variants[{variantId}].Sku"],
-                            Price = decimal.TryParse(HttpContext.Request.Form[$"Variants[{variantId}].Price"], out decimal price) ? price : 0,
+                            ListPrice = decimal.TryParse(HttpContext.Request.Form[$"Variants[{variantId}].ListPrice"], out decimal listPrice) ? listPrice : 0,
+                            SalePrice = decimal.TryParse(HttpContext.Request.Form[$"Variants[{variantId}].SalePrice"], out decimal salePrice) ? salePrice : 0,
                             StockQuantity = int.TryParse(HttpContext.Request.Form[$"Variants[{variantId}].StockQuantity"], out int stock) ? stock : 0,
                             Barcode = HttpContext.Request.Form[$"Variants[{variantId}].Barcode"],
                             VariationAttributes = new Dictionary<int, int>()
                         };
 
-                        // Varyasyon attribute'larını geri yükle
                         foreach (var key in HttpContext.Request.Form.Keys)
                         {
                             if (key.StartsWith($"Variants[{variantId}].VariationAttributes["))
@@ -356,7 +502,6 @@ namespace Pazaryeri.Controllers
                 }
             }
 
-            // 3. Normal attribute'ları geri yükle
             model.AttributeValues = new Dictionary<int, string>();
             foreach (var key in HttpContext.Request.Form.Keys)
             {
@@ -370,7 +515,6 @@ namespace Pazaryeri.Controllers
                 }
             }
 
-            // 4. RESİMLERİ GERİ YÜKLE - YENİ EKLENEN KISIM
             await RestoreImages(model);
         }
 
@@ -378,7 +522,6 @@ namespace Pazaryeri.Controllers
         {
             try
             {
-                // Ürün resimlerini geri yükle
                 if (HttpContext.Request.Form.Files.Count > 0)
                 {
                     model.TempProductImageUrls = new List<string>();
@@ -387,14 +530,12 @@ namespace Pazaryeri.Controllers
                     {
                         if (file.Name == "ImageFiles" && file.Length > 0)
                         {
-                            // Resmi kaydet ve URL'sini al
                             var imageUrl = await _imageRepository.UploadImageAsync(file);
                             model.TempProductImageUrls.Add(imageUrl);
                         }
                     }
                 }
 
-                // Varyasyon resimlerini geri yükle
                 model.TempVariantImageUrls = new Dictionary<int, List<string>>();
 
                 foreach (var variantId in model.VariantIds)
@@ -442,7 +583,8 @@ namespace Pazaryeri.Controllers
                             {
                                 TempId = variantId,
                                 Sku = HttpContext.Request.Form[$"Variants[{variantId}].Sku"],
-                                Price = decimal.TryParse(HttpContext.Request.Form[$"Variants[{variantId}].Price"], out decimal price) ? price : 0,
+                                ListPrice = decimal.TryParse(HttpContext.Request.Form[$"Variants[{variantId}].ListPrice"], out decimal listPrice) ? listPrice : 0,
+                                SalePrice = decimal.TryParse(HttpContext.Request.Form[$"Variants[{variantId}].SalePrice"], out decimal salePrice) ? salePrice : 0,
                                 StockQuantity = int.TryParse(HttpContext.Request.Form[$"Variants[{variantId}].StockQuantity"], out int stock) ? stock : 0,
                                 Barcode = HttpContext.Request.Form[$"Variants[{variantId}].Barcode"],
                                 VariationAttributes = new Dictionary<int, int>()
@@ -514,7 +656,6 @@ namespace Pazaryeri.Controllers
             }
         }
 
-
         private Dictionary<int, int> ParseVariationAttributes(IFormCollection form, int variantId)
         {
             var attributes = new Dictionary<int, int>();
@@ -550,6 +691,7 @@ namespace Pazaryeri.Controllers
 
             await LoadBrandsAsync(model);
             await LoadCategoriesAsync(model);
+            await LoadTrendyolCargos(model);
 
             if (model.CategoryId.HasValue)
             {
@@ -565,12 +707,12 @@ namespace Pazaryeri.Controllers
         {
             await LoadBrandsAsync(model);
             await LoadCategoriesAsync(model);
+            await LoadTrendyolCargos(model);
 
             if (ModelState.IsValid)
             {
                 try
                 {
-                    // Varyasyonları request'ten al
                     if (model.VariantIds != null && model.VariantIds.Any())
                     {
                         model.Variants = model.VariantIds.Select(id =>
@@ -579,7 +721,8 @@ namespace Pazaryeri.Controllers
                             {
                                 TempId = id,
                                 Sku = HttpContext.Request.Form[$"Variants[{id}].Sku"],
-                                Price = decimal.Parse(HttpContext.Request.Form[$"Variants[{id}].Price"]),
+                                ListPrice = decimal.Parse(HttpContext.Request.Form[$"Variants[{id}].ListPrice"]),
+                                SalePrice = decimal.Parse(HttpContext.Request.Form[$"Variants[{id}].SalePrice"]),
                                 StockQuantity = int.Parse(HttpContext.Request.Form[$"Variants[{id}].StockQuantity"]),
                                 Barcode = HttpContext.Request.Form[$"Variants[{id}].Barcode"],
                                 VariationAttributes = ParseVariationAttributes(HttpContext.Request.Form, id)
@@ -587,10 +730,8 @@ namespace Pazaryeri.Controllers
                         }).ToList();
                     }
 
-                    // Resimleri geri yükle
                     await RestoreImages(model);
 
-                    // Güncelleme işlemi
                     var product = await _productRepository.UpdateProductAsync(model);
 
                     await UploadVariantImages(product.Id, model);
@@ -605,7 +746,6 @@ namespace Pazaryeri.Controllers
                 }
             }
 
-            // ModelState invalid ise verileri geri yükle
             await RestoreModelData(model);
             return View(model);
         }
@@ -626,12 +766,10 @@ namespace Pazaryeri.Controllers
         {
             try
             {
-                // ProductId'ye göre varyasyonları bul
                 var variants = await _productRepository.GetVariantsByProductIdAsync(productId);
 
                 foreach (var variant in variants)
                 {
-                    // Bu varyasyon için dosyaları bul
                     var variantFiles = HttpContext.Request.Form.Files
                         .Where(f => f.Name.StartsWith($"Variants[{variant.TempId}].ImageFiles"))
                         .ToList();
@@ -642,14 +780,10 @@ namespace Pazaryeri.Controllers
                         {
                             if (file.Length > 0)
                             {
-                                // Resmi yükle ve URL'sini al
                                 var imageUrl = await _imageRepository.UploadImageAsync(file);
 
-                                // Varyasyon resmini veritabanına kaydet
                                 await _productRepository.AddVariantImageAsync(variant.Id, imageUrl);
 
-                                _logger.LogInformation("Varyasyon resmi yüklendi: VariantId: {VariantId}, Image: {ImageUrl}",
-                                    variant.Id, imageUrl);
                             }
                         }
                     }
@@ -675,6 +809,7 @@ namespace Pazaryeri.Controllers
                 StockQuantity = product.StockQuantity,
                 BrandId = product.BrandId,
                 CategoryId = product.CategoryId,
+                TrendyolCargoId = product.TrendyolCargoId,
                 TempProductImageUrls = product.Images.Select(c => c.ImageUrl).ToList(),
                 TempVariantImageUrls = product.Variants.SelectMany(v => v.VariantImages).GroupBy(vi => vi.ProductVariantId).ToDictionary(g => g.Key, g => g.Select(c => c.ImageUrl).ToList()),
                 ExistingImages = product.Images.Select(i => new ProductImageViewModel
@@ -689,7 +824,8 @@ namespace Pazaryeri.Controllers
                     Id = v.Id,
                     TempId = v.TempId,
                     Sku = v.Sku,
-                    Price = v.Price,
+                    ListPrice = v.ListPrice,
+                    SalePrice = v.SalePrice,
                     StockQuantity = v.StockQuantity,
                     Barcode = v.Barcode,
                     ExistingImages = v.VariantImages.Select(vi => vi.ImageUrl).ToList(),
@@ -710,6 +846,7 @@ namespace Pazaryeri.Controllers
 
             await LoadBrandsAsync(model);
             await LoadCategoriesAsync(model);
+            await LoadTrendyolCargos(model);
 
             model.Variants ??= new List<ProductVariantViewModel>();
 
@@ -734,6 +871,22 @@ namespace Pazaryeri.Controllers
                 Selected = model.BrandId == null
             });
         }
+
+        private async Task LoadTrendyolCargos(ProductViewModel model)
+        {
+            model.TrendyolCargos = TrendyolCargo.CargoList.Select(c => new SelectListItem
+            {
+                Value = c.Id.ToString(),
+                Text = c.Name
+            }).ToList();
+            model.TrendyolCargos.Insert(0, new SelectListItem
+            {
+                Value = "",
+                Text = "Kargo Seçiniz...",
+                Selected = model.TrendyolCargoId == null
+            });
+        }
+
 
         private async Task LoadCategoriesAsync(ProductViewModel model)
         {
@@ -780,7 +933,7 @@ namespace Pazaryeri.Controllers
                 ProductVariant productVariant = await _productRepository.GetVariantByTempIdAsync(variant.TempId);
                 if (productVariant != null)
                 {
-                    variant.ExistingImages=productVariant.VariantImages.Select(c=>c.ImageUrl).ToList();
+                    variant.ExistingImages = productVariant.VariantImages.Select(c => c.ImageUrl).ToList();
                 }
 
                 var variationAttributes = request.VariationAttributes ?? new List<CategoryAttributeViewModel>();

@@ -21,6 +21,7 @@ namespace Pazaryeri.Models
         
         public int CategoryId { get; set; }
         public string TrendyolProductId { get; set; }
+        public int TrendyolCargoId { get; set; }
         public DateTime CreatedDate { get; set; } = DateTime.Now;
         public DateTime UpdatedDate { get; set; } = DateTime.Now;
         public bool Active { get; set; } = true;

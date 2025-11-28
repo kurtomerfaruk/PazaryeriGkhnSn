@@ -19,8 +19,11 @@ namespace Pazaryeri.ViewModels
         [Display(Name = "SKU")]
         public string Sku { get; set; }
 
-        [Display(Name = "Fiyat")]
-        public decimal Price { get; set; }
+        [Display(Name = "Liste Fiyatı")]
+        public decimal ListPrice { get; set; }
+
+        [Display(Name = "Satış Fiyatı")]
+        public decimal SalePrice { get; set; }
 
         [Display(Name = "Stok")]
         public int StockQuantity { get; set; }

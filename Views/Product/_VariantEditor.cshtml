@@ -57,19 +57,25 @@
         </div>
 
         <div class="row">
-            <div class="col-md-4">
+            <div class="col-md-6">
                 <div class="form-group">
-                    <label>Fiyat *</label>
-                    <input type="number" step="0.01" name="Variants[@Model.TempId].Price" value="@Model.Price" class="form-control" required />
+                    <label>Liste Fiyatı *</label>
+                    <input type="number" step="0.01" name="Variants[@Model.TempId].ListPrice" value="@Model.ListPrice" class="form-control" required />
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label>Satış Fiyatı *</label>
+                    <input type="number" step="0.01" name="Variants[@Model.TempId].SalePrice" value="@Model.SalePrice" class="form-control" required />
+                </div>
+            </div>
+            <div class="col-md-6">
                 <div class="form-group">
                     <label>Stok *</label>
                     <input type="number" name="Variants[@Model.TempId].StockQuantity" value="@Model.StockQuantity" class="form-control" required />
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-6">
                 <div class="form-group">
                     <label>Varyasyon Resimleri</label>
                     <input type="file" name="Variants[@Model.TempId].ImageFiles" class="form-control" multiple accept="image/*" />

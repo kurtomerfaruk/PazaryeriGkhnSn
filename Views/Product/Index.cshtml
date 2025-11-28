@@ -9,7 +9,7 @@
         <h3 class="content-header-title mb-0 d-inline-block">Ürün Yönetimi</h3>
     </div>
     <div class="content-header-right col-md-6 col-12">
-        
+
         <div class="dropdown float-md-right">
             <a href="/Product/Create" class="btn btn-primary">Ekle</a>
             <button class="btn btn-primary dropdown-toggle px-2" id="dropdownBreadcrumbButton" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Ürünleri Çek</button>
@@ -26,11 +26,11 @@
 <div class="card">
     <div class="card-body">
         @* <form method="post" enctype="multipart/form-data" action="/Product/ImportExcel">
-            <div class="input-group mb-3">
-                <input type="file" name="file" class="form-control">
-                <button class="btn btn-secondary">Stok / Fiyat Güncelleme</button>
-            </div>
-        </form> *@
+                <div class="input-group mb-3">
+                    <input type="file" name="file" class="form-control">
+                    <button class="btn btn-secondary">Stok / Fiyat Güncelleme</button>
+                </div>
+            </form> *@
         <form id="importExcelForm" method="post" enctype="multipart/form-data">
             <div class="input-group mb-3">
                 <input type="file" name="file" id="excelFile" class="form-control" accept=".xlsx,.xls">
@@ -46,9 +46,9 @@
             <thead>
                 <tr>
                     <th>ID</th>
-                   @*  <th>Platform</th>
+                    @*  <th>Platform</th>
+                        <th>Alt Başlık</th> *@
                     <th>Başlık</th>
-                    <th>Alt Başlık</th> *@
                     <th>İşlemler</th>
                 </tr>
             </thead>
@@ -63,7 +63,7 @@
     <link href="~/app-assets/vendors/css/tables/datatable/buttons.bootstrap4.min.css" rel="stylesheet" />
 
     @*  <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.4/toastr.min.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.4/toastr.min.css" rel="stylesheet"> *@
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.4/toastr.min.css" rel="stylesheet"> *@
     <script src="~/app-assets/vendors/js/extensions/toastr.min.js"></script>
     <link href="~/app-assets/vendors/css/extensions/toastr.css" rel="stylesheet" />
 
@@ -96,13 +96,18 @@
                 },
                 columns: [
                     { data: 'id',name:'id' },
+                    { data: 'title',name:'title' },
                     {
                         data: 'actions',
                         render: function (data, type, row) {
                             var html =`<button class="btn btn-sm btn-info details-btn" data-id="${row.id}" data-toggle="tooltip" title="Detay">
                                         <i class="la la-eye"></i>
                                     </button>
-                                    <a href="/Product/Edit/${row.id}" class="btn btn-warning btn-sm">Düzenle</a>`;
+                                    <a href="/Product/Edit/${row.id}" class="btn btn-warning btn-sm">Güncelle</a>
+                                    <button class="btn btn-sm btn-info trendyol-update-btn" data-id="${row.id}" data-toggle="tooltip" title="Trendyol'a Gönder">
+                                        <i class="la la-send"></i>
+                                    </button>
+                                    `;
 
                              return html;
                         },
@@ -154,6 +159,38 @@
                     });
             });
 
+            $('#productsTable').on('click', '.trendyol-update-btn', function (e) {
+                e.preventDefault();
+                console.log("deneme");
+                var $btn = $('.trendyol-update-btn');
+                var id = $(this).data('id');
+
+                var data = { id: id};
+
+                $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Gönderiliyor...');
+
+                var url ='@Url.Action("SendTrendyol")';
+
+
+
+                $.post(url, data)
+                    .done(function (response) {
+                        console.log(JSON.stringify(response));
+                        if (response.success) {
+                            table.ajax.reload();
+                            toastr.success(response.message);
+                        } else {
+                            toastr.error(response.message);
+                        }
+                    })
+                    .fail(function () {
+                        toastr.error('Ürün gönderilirken hata oluştu.');
+                    })
+                    .always(function () {
+                        $btn.prop('disabled', false).html('<i class="fas fa-sync"></i> Trendyola Gönder');
+                    });
+            });
+
              $('#productsTable').on('click', '.details-btn', function () {
                 var productId = $(this).data('id');
                 showProductDetails(productId);
@@ -174,7 +211,6 @@
             }
 
             function showProductDetailsModal(data) {
-                console.log(data);
             var modalHtml = `
                 <div class="modal fade" id="productDetailsModal" tabindex="-1">
                     <div class="modal-dialog modal-xl">

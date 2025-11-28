@@ -23,9 +23,6 @@ namespace Pazaryeri.Data
         public DbSet<Category> Categories => Set<Category>();
         public DbSet<CategoryAttribute> CategoryAttributes => Set<CategoryAttribute>();
         public DbSet<CategoryAttributeValue> CategoryAttributeValue => Set<CategoryAttributeValue>();
-        public DbSet<TrendyolAttribute> TrendyolAttributes => Set<TrendyolAttribute>();
-        public DbSet<TrendyolImage> TrendyolImages => Set<TrendyolImage>();
-        public DbSet<TrendyolProductDetail> TrendyolProductDetails => Set<TrendyolProductDetail>();
         public DbSet<TrendyolRejectReasonDetail> TrendyolRejectReasonDetails => Set<TrendyolRejectReasonDetail>();
         public DbSet<Question> Questions => Set<Question>();
         public DbSet<Transaction> Transactions => Set<Transaction>();

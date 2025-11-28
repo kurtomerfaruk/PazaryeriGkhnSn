@@ -1,5 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
-using Microsoft.AspNetCore.Mvc.Rendering;
+﻿using Microsoft.AspNetCore.Mvc.Rendering;
+using Pazaryeri.Entity.Trendyol;
+using System.ComponentModel.DataAnnotations;
 
 namespace Pazaryeri.ViewModels
 {
@@ -41,6 +42,10 @@ namespace Pazaryeri.ViewModels
         [Display(Name = "Kategori")]
         public int? CategoryId { get; set; }
 
+        [Required(ErrorMessage = "Trendyol Kargo seçiniz...")]
+        [Display(Name = "Trendyol Kargo")]
+        public int? TrendyolCargoId { get; set; }
+
         public List<SelectListItem> Brands { get; set; } = new();
         public List<SelectListItem> Categories { get; set; } = new();
 
@@ -57,6 +62,7 @@ namespace Pazaryeri.ViewModels
         public Dictionary<int, string> AttributeValues { get; set; } = new Dictionary<int, string>();
         public List<string> TempProductImageUrls { get; set; } = new List<string>();
         public Dictionary<int, List<string>> TempVariantImageUrls { get; set; } = new Dictionary<int, List<string>>();
+        public List<SelectListItem> TrendyolCargos { get; set; }
 
     }
 }

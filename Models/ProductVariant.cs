@@ -8,7 +8,8 @@ namespace Pazaryeri.Models
         public int TempId { get; set; }
         public int ProductId { get; set; }
         public string Sku { get; set; }
-        public decimal Price { get; set; }
+        public decimal ListPrice { get; set; }
+        public decimal SalePrice { get; set; }
         public int StockQuantity { get; set; }
         public string Barcode { get; set; }
         public DateTime CreatedDate { get; set; } = DateTime.Now;
