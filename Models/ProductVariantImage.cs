@@ -10,6 +10,7 @@ namespace Pazaryeri.Models
 
         [Required]
         public string ImageUrl { get; set; }
+        public string TrendyolImageUrl { get; set; }
         public DateTime CreatedDate { get; set; } = DateTime.Now;
 
         public ProductVariant ProductVariant { get; set; }

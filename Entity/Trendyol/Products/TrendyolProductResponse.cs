@@ -36,6 +36,7 @@
     {
         public int attributeId { get; set; }
         public int? attributeValueId { get; set; }
+        public string? attributeValue { get; set; }
         public string? customAttributeValue { get; set; }
     }
 }

@@ -1,5 +1,4 @@
-﻿using DocumentFormat.OpenXml.Office2010.ExcelAc;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Pazaryeri.Entity.Trendyol;
 using Pazaryeri.Entity.Trendyol.Categories;
 using Pazaryeri.Entity.Trendyol.CategoryAttribute;
@@ -11,12 +10,9 @@ using Pazaryeri.Entity.Trendyol.Response;
 using Pazaryeri.Entity.Trendyol.Transaction;
 using Pazaryeri.Helper;
 using Pazaryeri.Models;
+using Pazaryeri.Repositories.Interfaces;
 using RestSharp;
-using System.Collections.Generic;
-using System.Diagnostics.Metrics;
 using System.Net;
-using System.Net.Http;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
 
 namespace Pazaryeri.Services
@@ -49,6 +45,59 @@ namespace Pazaryeri.Services
         public async Task<List<Order>> GetOrdersAsync(int page = 0, int size = 200)
         {
             return await GetAllOrdersRecursiveAsync(page, size);
+        }
+
+        private async Task<List<Order>> GetAllOrdersRecursiveAsync(int page = 0, int size = 200)
+        {
+            var allOrders = new List<Order>();
+            int currentPage = page;
+
+            do
+            {
+                try
+                {
+                    var request = new RestRequest($"order/sellers/{_configuration["Trendyol:SupplierId"]}/orders");
+                    request.AddParameter("page", currentPage);
+                    request.AddParameter("size", size);
+                    request.AddParameter("orderByField", "CreatedDate");
+                    request.AddParameter("orderByDirection", "DESC");
+
+                    var response = await _client.ExecuteAsync(request);
+
+                    if (response.IsSuccessful && !string.IsNullOrEmpty(response.Content))
+                    {
+                        var trendyolResponse = JsonConvert.DeserializeObject<TrendyolOrders>(response.Content);
+
+                        if (trendyolResponse?.content != null && trendyolResponse.content.Any())
+                        {
+                            var orders = trendyolResponse.content.Select(CreateOrderFromTrendyol).ToList();
+                            allOrders.AddRange(orders);
+
+                            if (orders.Count < size) break;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        break;
+                    }
+
+                    currentPage++;
+                    await Task.Delay(100);
+
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Trendyol sayfa {Page} çekilirken hata", currentPage);
+                    break;
+                }
+
+            } while (currentPage < 1000);
+
+            return allOrders;
         }
 
         public async Task<bool> UpdateOrderStatus(Order order)
@@ -115,7 +164,7 @@ namespace Pazaryeri.Services
                 return new BatchRequestIdResponse();
             }
         }
-        
+
         public async Task<BatchResponse> UpdateStockPriceBatchResult(string batchRequestId)
         {
             try
@@ -131,59 +180,6 @@ namespace Pazaryeri.Services
                 _logger.LogError(ex, "Trendyol stok fiyat guncellenirken hata olustu");
                 return new BatchResponse();
             }
-        }
-
-        private async Task<List<Order>> GetAllOrdersRecursiveAsync(int page = 0, int size = 200)
-        {
-            var allOrders = new List<Order>();
-            int currentPage = page;
-
-            do
-            {
-                try
-                {
-                    var request = new RestRequest($"order/sellers/{_configuration["Trendyol:SupplierId"]}/orders");
-                    request.AddParameter("page", currentPage);
-                    request.AddParameter("size", size);
-                    request.AddParameter("orderByField", "CreatedDate");
-                    request.AddParameter("orderByDirection", "DESC");
-
-                    var response = await _client.ExecuteAsync(request);
-
-                    if (response.IsSuccessful && !string.IsNullOrEmpty(response.Content))
-                    {
-                        var trendyolResponse = JsonConvert.DeserializeObject<TrendyolOrders>(response.Content);
-
-                        if (trendyolResponse?.content != null && trendyolResponse.content.Any())
-                        {
-                            var orders = trendyolResponse.content.Select(CreateOrderFromTrendyol).ToList();
-                            allOrders.AddRange(orders);
-
-                            if (orders.Count < size) break;
-                        }
-                        else
-                        {
-                            break;
-                        }
-                    }
-                    else
-                    {
-                        break;
-                    }
-
-                    currentPage++;
-                    await Task.Delay(100);
-
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Trendyol sayfa {Page} çekilirken hata", currentPage);
-                    break;
-                }
-
-            } while (currentPage < 1000);
-
-            return allOrders;
         }
 
         private Order CreateOrderFromTrendyol(OrderContent trendyolOrder)
@@ -235,6 +231,8 @@ namespace Pazaryeri.Services
 
         }
 
+
+
         private string GetTrendyolOrderStatus(string trendyolStatus)
         {
             return trendyolStatus switch
@@ -250,109 +248,126 @@ namespace Pazaryeri.Services
             };
         }
 
-        //public async Task<List<IGrouping<string, TrendyolProductDetail>>> GetGroupedProductsAsync()
+        public async Task<List<IGrouping<string, ProductContent>>> GetGroupedProductsAsync()
+        {
+            var allProducts = await GetAllProductsRecursiveAsync();
+
+            return allProducts
+                .Where(p => !string.IsNullOrEmpty(p.productMainId))
+                .GroupBy(p => p.productMainId)
+                .ToList();
+        }
+
+        private async Task<List<ProductContent>> GetAllProductsRecursiveAsync(int page = 0, int size = 50)
+        {
+            var allProducts = new List<ProductContent>();
+            int currentPage = page;
+
+            do
+            {
+                try
+                {
+                    var request = new RestRequest($"/product/sellers/{_configuration["Trendyol:SupplierId"]}/products");
+                    request.AddParameter("page", currentPage);
+                    request.AddParameter("size", size);
+
+                    var response = await _client.ExecuteAsync<TrendyolProducts>(request);
+
+                    if (response.IsSuccessful && response.Data?.content != null && response.Data.content.Any())
+                    {
+                        var products = response.Data.content;
+                        allProducts.AddRange(products);
+
+                        if (products.Count < size) break;
+                    }
+                    else
+                    {
+                        break;
+                    }
+
+                    currentPage++;
+                    await Task.Delay(100);
+
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Trendyol ürün sayfa {Page} çekilirken hata", currentPage);
+                    break;
+                }
+
+            } while (currentPage < 1000);
+
+            return allProducts;
+        }
+
+        //private async Product CreateProductFromTrendyol(ProductContent content)
         //{
-        //    var allProducts = await GetAllProductsRecursiveAsync();
+        //    //    var color = trendyolProduct.attributes?
+        //    //        .FirstOrDefault(a => a.attributeName == "Renk")?.attributeValue;
 
-        //    return allProducts
-        //        .Where(p => !string.IsNullOrEmpty(p.ProductMainId))
-        //        .GroupBy(p => p.ProductMainId)
-        //        .ToList();
-        //}
+        //    //    var webColor = trendyolProduct.attributes?
+        //    //        .FirstOrDefault(a => a.attributeName == "Web Color")?.attributeValue;
+        //    //    var subtitle = trendyolProduct.title?.Length > 50
+        //    //? trendyolProduct.title.Substring(0, 50)
+        //    //: trendyolProduct.title;
 
-        //private async Task<List<TrendyolProductDetail>> GetAllProductsRecursiveAsync(int page = 0, int size = 50)
-        //{
-        //    var allProducts = new List<TrendyolProductDetail>();
-        //    int currentPage = page;
+        //    //    List<TrendyolAttribute> attributes = trendyolProduct.attributes?
+        //    //                            .Select(item => new TrendyolAttribute
+        //    //                            {
+        //    //                                AttributeId = item.attributeId,
+        //    //                                AttributeName = item.attributeName,
+        //    //                                AttributeValue = item.attributeValue,
+        //    //                                AttributeValueId = item.attributeValueId,
+        //    //                            })
+        //    //                            .ToList() ?? new List<TrendyolAttribute>();
 
-        //    do
+        //    //    List<TrendyolImage> images = trendyolProduct.images?
+        //    //                           .Select(item => new TrendyolImage
+        //    //                           {
+        //    //                               Url = item.url
+        //    //                           })
+        //    //                           .ToList() ?? new List<TrendyolImage>();
+
+        //    var brand = await _brandRepository.GetOrCreateAsync(content.brandId, content.brand);
+        //    var category = await _categoryRepository.GetByIdAsync(content.pimCategoryId);
+        //    if (category == null)
         //    {
-        //        try
-        //        {
-        //            var request = new RestRequest($"/product/sellers/{_configuration["Trendyol:SupplierId"]}/products");
-        //            request.AddParameter("page", currentPage);
-        //            request.AddParameter("size", size);
+        //        throw new Exception("Trendyol kategorilerini güncelleyin");
+        //    }
 
-        //            var response = await _client.ExecuteAsync<TrendyolProducts>(request);
+        //    List<ProductImage> images = new List<ProductImage>();
 
-        //            if (response.IsSuccessful && response.Data?.content != null && response.Data.content.Any())
-        //            {
-        //                var products = response.Data.content.Select(CreateProductFromTrendyol).ToList();
-        //                allProducts.AddRange(products);
-
-        //                if (products.Count < size) break;
-        //            }
-        //            else
-        //            {
-        //                break;
-        //            }
-
-        //            currentPage++;
-        //            await Task.Delay(100);
-
-        //        }
-        //        catch (Exception ex)
-        //        {
-        //            _logger.LogError(ex, "Trendyol ürün sayfa {Page} çekilirken hata", currentPage);
-        //            break;
-        //        }
-
-        //    } while (currentPage < 1000);
-
-        //    return allProducts;
-        //}
-
-        //private TrendyolProductDetail CreateProductFromTrendyol(ProductContent trendyolProduct)
-        //{
-        //    var color = trendyolProduct.attributes?
-        //        .FirstOrDefault(a => a.attributeName == "Renk")?.attributeValue;
-
-        //    var webColor = trendyolProduct.attributes?
-        //        .FirstOrDefault(a => a.attributeName == "Web Color")?.attributeValue;
-        //    var subtitle = trendyolProduct.title?.Length > 50
-        //? trendyolProduct.title.Substring(0, 50)
-        //: trendyolProduct.title;
-
-        //    List<TrendyolAttribute> attributes = trendyolProduct.attributes?
-        //                            .Select(item => new TrendyolAttribute
-        //                            {
-        //                                AttributeId = item.attributeId,
-        //                                AttributeName = item.attributeName,
-        //                                AttributeValue = item.attributeValue,
-        //                                AttributeValueId = item.attributeValueId,
-        //                            })
-        //                            .ToList() ?? new List<TrendyolAttribute>();
-
-        //    List<TrendyolImage> images = trendyolProduct.images?
-        //                           .Select(item => new TrendyolImage
-        //                           {
-        //                               Url = item.url
-        //                           })
-        //                           .ToList() ?? new List<TrendyolImage>();
-
-
-        //    return new TrendyolProductDetail
+        //    foreach (var img in content.images)
         //    {
-        //        ProductMainId = trendyolProduct.productMainId,
-        //        Title = trendyolProduct.title,
-        //        Subtitle = subtitle,
-        //        Description = trendyolProduct.description,
-        //        Barcode = trendyolProduct.barcode,
-        //        TrenyolProductId = trendyolProduct.id,
-        //        BrandId = trendyolProduct.brandId,
-        //        CategoryId = trendyolProduct.pimCategoryId,
-        //        Quantity = trendyolProduct.quantity,
-        //        StockCode = trendyolProduct.stockCode,
-        //        DimensionalWeight = trendyolProduct.dimensionalWeight,
-        //        ListPrice = decimal.Parse(trendyolProduct.listPrice.ToString()),
-        //        SalePrice = decimal.Parse(trendyolProduct.salePrice.ToString()),
-        //        VatRate = trendyolProduct.vatRate,
-        //        ProductCode = trendyolProduct.productCode,
-        //        ProductUrl = trendyolProduct.productUrl,
-        //        SaleStatus = trendyolProduct.onSale,
-        //        ApprovalStatus = trendyolProduct.approved,
-        //        Attributes = attributes,
+        //        string localPath = await _imageRepository. ImportImageFromUrlAsync(img.url);
+
+        //        images.Add(new ProductImage
+        //        {
+        //            ImageUrl = localPath
+        //        });
+        //    }
+
+        //    return new Product
+        //    {
+        //        ProductCode = content.productCode.ToString(),
+        //        Title = content.title,
+        //        Description = content.description,
+        //        ProductMainId = content.productMainId,
+        //        Price = decimal.Parse(content.salePrice.ToString()),
+        //        StockQuantity = content.quantity,
+        //        BrandId = brand.Id,
+        //        CategoryId = category.Id,
+        //        TrendyolProductId = content.id,
+        //        Trendyols = new List<ProductTrendyol>
+        //        {
+        //            new ProductTrendyol
+        //            {
+        //                IsApproved=content.approved,
+        //                IsOnSale=content.onSale,
+        //            },
+        //         },
         //        Images = images,
+        //        Variants =
         //    };
         //}
 

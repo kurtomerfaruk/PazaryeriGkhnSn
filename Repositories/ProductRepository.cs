@@ -1,9 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pazaryeri.Data;
+using Pazaryeri.Entity.Trendyol.Products;
 using Pazaryeri.Models;
 using Pazaryeri.Repositories.Interfaces;
 using Pazaryeri.ViewModels;
+using System;
 using System.Linq.Expressions;
 using System.Text.RegularExpressions;
 
@@ -12,10 +14,25 @@ namespace Pazaryeri.Repositories
     public class ProductRepository : IProductRepository
     {
         private readonly AppDbContext _context;
+        private readonly IBrandRepository _brandRepository;
+        private readonly ICategoryRepository _categoryRepository;
+        private readonly IImageRepository _imageRepository;
+        private readonly ICategoryAttributeRepository _categoryAttributeRepository;
+        private readonly ICategoryAttributeValueRepository _categoryAttributeValueRepository;
 
-        public ProductRepository(AppDbContext context)
+        public ProductRepository(AppDbContext context,
+            IBrandRepository brandRepository,
+            ICategoryRepository categoryRepository,
+            IImageRepository imageRepository,
+            ICategoryAttributeRepository categoryAttributeRepository,
+            ICategoryAttributeValueRepository categoryAttributeValueRepository)
         {
             _context = context;
+            _brandRepository = brandRepository;
+            _categoryRepository = categoryRepository;
+            _imageRepository = imageRepository;
+            _categoryAttributeRepository = categoryAttributeRepository;
+            _categoryAttributeValueRepository = categoryAttributeValueRepository;
         }
 
         public async Task DeleteAsync(int id)
@@ -119,68 +136,408 @@ namespace Pazaryeri.Repositories
                 .AnyAsync(p => p.Title == productMainId);
         }
 
-        //public async Task SaveGroup(List<IGrouping<string, TrendyolProductDetail>> Values)
-        //{
-        //    foreach (var group in Values)
-        //    {
-        //        var existingProduct = await _context.Products
-        //                            .FirstOrDefaultAsync(p => p.Title == group.Key);
-        //        if (existingProduct == null)
-        //        {
-        //            existingProduct = new Product
-        //            {
-        //                Title = group.Key
-        //            };
-        //            await CreateAsync(existingProduct);
-        //        }
+        public async Task SaveGroup(List<IGrouping<string, ProductContent>> groupedProducts)
+        {
+            foreach (var group in groupedProducts)
+            {
+                string productMainId = group.Key;
 
-        //        var firstGroup = group.First();
-        //        existingProduct.Title = firstGroup.Title;
-        //        existingProduct.Description = firstGroup.Description;
+                var existingProduct = await GetByProductMainIdAsync(productMainId);
 
-        //        //foreach (var item in group)
-        //        //{
-        //        //    var existingDetail = existingProduct.TrendyolDetails
-        //        //                .FirstOrDefault(d => d.TrenyolProductId == item.TrenyolProductId);
+                var mainItem = group.First();
 
-        //        //    if (existingDetail == null)
-        //        //    {
-        //        //        existingDetail = item;
-        //        //        existingDetail.Brand = await _context.Brands.FirstOrDefaultAsync(b => b.BrandId == item.BrandId);
-        //        //        existingDetail.Category = await _context.Categories.FirstOrDefaultAsync(c => c.CategoryId == item.CategoryId);
-        //        //        existingProduct.TrendyolDetails.Add(existingDetail);
-        //        //    }
-        //        //    else
-        //        //    {
+                if (existingProduct == null)
+                {
+                    var brand = await _brandRepository.GetOrCreateAsync(mainItem.brandId, mainItem.brand);
+                    var category = await _categoryRepository.GetByCategoryIdAsync(mainItem.pimCategoryId);
+                    if (category == null)
+                    {
+                        throw new Exception("Trendyol kategorilerini güncelleyin:" + mainItem.pimCategoryId + "--" + mainItem.categoryName);
+                    }
 
-        //        //        var brand = await _context.Brands.FirstOrDefaultAsync(b => b.BrandId == item.BrandId);
-        //        //        var category = await _context.Categories.FirstOrDefaultAsync(c => c.CategoryId == item.CategoryId);
-        //        //        existingDetail.Barcode = item.Barcode;
-        //        //        existingDetail.BrandId = brand.Id;
-        //        //        existingDetail.CategoryId = category.Id;
-        //        //        existingDetail.Quantity = item.Quantity;
-        //        //        existingDetail.StockCode = item.StockCode;
-        //        //        existingDetail.DimensionalWeight = item.DimensionalWeight;
-        //        //        existingDetail.CurrencyType = item.CurrencyType;
-        //        //        existingDetail.ListPrice = item.ListPrice;
-        //        //        existingDetail.SalePrice = item.SalePrice;
-        //        //        existingDetail.VatRate = item.VatRate;
-        //        //        existingDetail.CargoCompanyId = item.CargoCompanyId;
-        //        //        existingDetail.ShipmentAddressId = item.ShipmentAddressId;
-        //        //        existingDetail.ReturningAddressId = item.ReturningAddressId;
-        //        //        existingDetail.ProductCode = item.ProductCode;
-        //        //        existingDetail.ProductUrl = item.ProductUrl;
-        //        //        existingDetail.SaleStatus = item.SaleStatus;
-        //        //        existingDetail.ApprovalStatus = item.ApprovalStatus;
+                    var newProduct = new Product
+                    {
+                        Title = mainItem.title,
+                        ProductCode = mainItem.productMainId,
+                        TrendyolProductMainId = mainItem.productMainId,
+                        Description = mainItem.description,
+                        BrandId = brand.Id,
+                        CategoryId = category.Id,
+                        Price = decimal.Parse(mainItem.salePrice.ToString()),
+                        StockQuantity = mainItem.quantity,
+                        CreatedDate = DateTime.Now,
+                        UpdatedDate = DateTime.Now,
+                        Active = true,
+                    };
 
-        //        //    }
+                    int tempId = 1;
+
+                    foreach (var item in group)
+                    {
+                        var variant = new ProductVariant
+                        {
+                            Barcode = item.barcode,
+                            Sku = item.stockCode,
+                            StockQuantity = item.quantity,
+                            SalePrice = decimal.Parse(item.salePrice.ToString()),
+                            ListPrice = decimal.Parse(item.listPrice.ToString()),
+                            TempId = tempId,
+                            CreatedDate = DateTime.Now,
+                            Active = true
+                        };
+
+                        tempId++;
+
+                        foreach (var image in item.images)
+                        {
+                            if (image.url.Contains("localhost"))
+                            {
+                                continue;
+                            }
+                            var filePath = await _imageRepository.ImportImageFromUrlAsync(image.url);
+
+                            variant.VariantImages.Add(new ProductVariantImage
+                            {
+                                ImageUrl = filePath
+                            });
+                        }
+
+                        foreach (var attr in item.attributes)
+                        {
+                            var attribute = await _categoryAttributeRepository.GetByAttributeId(attr.attributeId);
+                            if (attribute == null)
+                            {
+                                throw new Exception("Kategori Özelliklerini güncelleyin");
+                            }
+
+                            if (attribute.Varianter)
+                            {
+                                var attributeValue = await _categoryAttributeValueRepository.GetByAttributeValueId(attr.attributeValueId);
+                                variant.VariantAttributes.Add(new ProductVariantAttribute
+                                {
+                                    AttributeId = attribute.Id,
+                                    AttributeValueId = attributeValue.Id,
+                                });
+                            }
+                            else
+                            {
+                                
+                                var attributeValue = await _categoryAttributeValueRepository.GetByAttributeValueId(attr.attributeValueId);
+
+                                //ProductAttribute productAttribute = new ProductAttribute();
+                                //productAttribute.AttributeId = attribute.CategoryAttributeId;
+                                //if (attributeValue == null)
+                                //{
+                                //    productAttribute.Value = attr.customAttributeValue;
+                                //}
+
+                                var existingAttr = newProduct.Attributes.FirstOrDefault(a => a.AttributeId == attribute.Id);
+
+                                var newValue = attributeValue == null
+                                    ? attr.attributeValue
+                                    : attributeValue.Id.ToString();
+
+                                if (existingAttr == null)
+                                {
+                                    newProduct.Attributes.Add(new ProductAttribute
+                                    {
+                                        AttributeId = attribute.Id,
+                                        Value = newValue
+                                    });
+                                }
+                                else
+                                {
+                                    existingAttr.Value = newValue;
+                                }
+                            }
+
+                        }
+
+                        newProduct.Variants.Add(variant);
+                    }
+
+                    await CreateAsync(newProduct);
+                }
+                else
+                {
+                    existingProduct.Title = mainItem.title;
+                    existingProduct.Price = decimal.Parse(mainItem.salePrice.ToString());
+                    existingProduct.StockQuantity = mainItem.quantity;
+                    existingProduct.UpdatedDate = DateTime.Now;
+
+                    existingProduct.Variants.Clear();
+
+                    foreach (var item in group)
+                    {
+
+                        var variant = new ProductVariant
+                        {
+                            Barcode = item.barcode,
+                            Sku = item.stockCode,
+                            StockQuantity = item.quantity,
+                            SalePrice = decimal.Parse(item.salePrice.ToString()),
+                            ListPrice = decimal.Parse(item.listPrice.ToString()),
+                            UpdatedDate = DateTime.Now,
+                            Active = true
+                        };
+
+                        foreach (var image in item.images)
+                        {
+                            var existingImages = variant.VariantImages.FirstOrDefault(a => a.TrendyolImageUrl == image.url);
+                            if (existingImages == null)
+                            {
+                                var filePath = await _imageRepository.ImportImageFromUrlAsync(image.url);
+
+                                variant.VariantImages.Add(new ProductVariantImage
+                                {
+                                    ImageUrl = filePath
+                                });
+                            }
+                            
+                        }
+
+                        foreach (var attr in item.attributes)
+                        {
+                            var attribute = await _categoryAttributeRepository.GetByAttributeId(attr.attributeId);
+                            if (attribute == null)
+                            {
+                                throw new Exception("Kategori Özelliklerini güncelleyin");
+                            }
+
+                            if (attribute.Varianter)
+                            {
+                                var attributeValue = await _categoryAttributeValueRepository.GetByAttributeValueId(attr.attributeValueId);
+                                variant.VariantAttributes.Add(new ProductVariantAttribute
+                                {
+                                    AttributeId = attribute.Id,
+                                    AttributeValueId = attributeValue.Id,
+                                });
+                            }
+                            else
+                            {
+                                var attributeValue = await _categoryAttributeValueRepository.GetByAttributeValueId(attr.attributeValueId);
+
+                                //ProductAttribute productAttribute = new ProductAttribute();
+                                //productAttribute.AttributeId = attribute.CategoryAttributeId;
+                                //if (attributeValue == null)
+                                //{
+                                //    productAttribute.Value = attr.attributeValue;
+                                //}
+
+                                var existingAttr = existingProduct.Attributes.FirstOrDefault(a => a.AttributeId == attribute.Id);
+
+                                var newValue = attributeValue == null
+                                    ? attr.attributeValue
+                                    : attributeValue.Id.ToString();
+
+                                if (existingAttr == null)
+                                {
+                                    existingProduct.Attributes.Add(new ProductAttribute
+                                    {
+                                        AttributeId = attribute.Id,
+                                        Value = newValue
+                                    });
+                                }
+                                else
+                                {
+                                    existingAttr.Value = newValue;
+                                }
+
+                            }
+
+                        }
+
+                        existingProduct.Variants.Add(variant);
+                    }
+
+                    await UpdateAsync(existingProduct);
+                }
+            }
+
+            await _context.SaveChangesAsync();
+
+            //foreach (var group in groupedProducts)
+            //{
+            //    string productMainId = group.Key;
+
+            //    var existingProduct = await GetByProductMainIdAsync(productMainId);
+
+            //    ProductContent mainItem = group.First();
+
+            //    if (existingProduct == null)
+            //    {
+            //        var brand = await _brandRepository.GetOrCreateAsync(mainItem.brandId, mainItem.brand);
+            //        var category = await _categoryRepository.GetByIdAsync(mainItem.pimCategoryId);
+            //        if (category == null)
+            //        {
+            //            throw new Exception("Trendyol kategorilerini güncelleyin");
+            //        }
+
+            //        var newProduct = new Product
+            //        {
+            //            Title = mainItem.title,
+            //            ProductCode = mainItem.productMainId,
+            //            TrendyolProductMainId = mainItem.productMainId,
+            //            BrandId = brand.Id,
+            //            CategoryId = category.Id,
+            //            Price = decimal.Parse(mainItem.salePrice.ToString()),
+            //            StockQuantity = mainItem.quantity
+            //        };
+
+            //        int tempId = 1;
+
+            //        foreach (var item in group)
+            //        {
+            //            newProduct.Variants.Add(new ProductVariant
+            //            {
+            //                Barcode = item.barcode,
+            //                Sku = item.stockCode,
+            //                StockQuantity = item.quantity,
+            //                SalePrice = decimal.Parse(item.salePrice.ToString()),
+            //                ListPrice = decimal.Parse(item.listPrice.ToString()),
+            //                TempId = tempId,
+            //                CreatedDate = DateTime.Now,
+            //                Active = true
+            //            });
+            //            tempId++;
+            //        }
+
+            //        foreach (var image in mainItem.images)
+            //        {
+            //            var savedFilePath = await _imageRepository.ImportImageFromUrlAsync(image.url);
+
+            //            newProduct.Images.Add(new ProductImage
+            //            {
+            //                ImageUrl = savedFilePath
+            //            });
+            //        }
+
+            //        await CreateAsync(newProduct);
+            //    }
+            //    else
+            //    {
+            //        existingProduct.Title = mainItem.title;
+            //        existingProduct.Price = decimal.Parse(mainItem.salePrice.ToString());
+            //        existingProduct.StockQuantity = mainItem.quantity;
+            //        existingProduct.UpdatedDate = DateTime.Now;
+
+            //        existingProduct.Variants.Clear();
+            //        foreach (var item in group)
+            //        {
+            //            existingProduct.Variants.Add(new ProductVariant
+            //            {
+            //                Barcode = item.barcode,
+            //                Sku = item.stockCode,
+            //                StockQuantity = item.quantity,
+            //                SalePrice = decimal.Parse(item.salePrice.ToString()),
+            //                ListPrice = decimal.Parse(item.listPrice.ToString())
+            //            });
+            //        }
+
+            //        existingProduct.Images.Clear();
+            //        foreach (var image in mainItem.images)
+            //        {
+            //            var savedFilePath = await _imageRepository.ImportImageFromUrlAsync(image.url);
+
+            //            existingProduct.Images.Add(new ProductImage
+            //            {
+            //                ImageUrl = savedFilePath
+            //            });
+            //        }
+
+            //        await UpdateAsync(existingProduct);
+            //    }
+            //}
+
+            //await _context.SaveChangesAsync();
+
+            //foreach (var group in Values)
+            //{
+            //    var existingProduct = await _context.Products.FirstOrDefaultAsync(p => p.TrendyolProductMainId == group.Key);
+            //    if (existingProduct == null)
+            //    {
+            //        existingProduct = new Product
+            //        {
+            //            Title = group.Key
+            //        };
+            //        await CreateAsync(existingProduct);
+            //    }
+
+            //    var firstGroup = group.First();
+
+            //    var brand = await _brandRepository.GetOrCreateAsync(firstGroup.brandId, firstGroup.brand);
+            //    var category = await _categoryRepository.GetByIdAsync(firstGroup.pimCategoryId);
+            //    if (category == null)
+            //    {
+            //        throw new Exception("Trendyol kategorilerini güncelleyin");
+            //    }
+
+            //    existingProduct.ProductCode = firstGroup.productCode.ToString();
+            //    existingProduct.Title = firstGroup.title;
+            //    existingProduct.Description = firstGroup.description;
+            //    existingProduct.Price = decimal.Parse(firstGroup.salePrice.ToString());
+            //    existingProduct.StockQuantity = firstGroup.quantity;
+            //    existingProduct.BrandId = brand.Id;
+            //    existingProduct.CategoryId = category.Id;
+            //    existingProduct.CreatedDate = DateTime.UtcNow;
+            //    existingProduct.Active = true;
+
+            //    List<ProductVariant> variants = new List<ProductVariant>();
+
+            //    foreach (var item in group)
+            //    {
+            //        var existingDetail = existingProduct.Trendyols.FirstOrDefault(d => d.TrendyolProductId == item.id);
 
 
-        //        //}
-        //    }
-        //    await _context.SaveChangesAsync();
-        //}
+            //        List<ProductImage> images = new List<ProductImage>();
 
+            //        foreach (var img in item.images)
+            //        {
+            //            string localPath = await _imageRepository.ImportImageFromUrlAsync(img.url);
+
+            //            images.Add(new ProductImage
+            //            {
+            //                ImageUrl = localPath
+            //            });
+            //        }
+
+            //        existingProduct.Images = images;
+
+
+
+
+
+            //        existingProduct.Variants = variants;
+
+            //        //if (existingDetail == null)
+            //        //{
+            //        //    existingDetail = ProductContentToProductTrendyol(item);
+            //        //    existingProduct.Trendyols.Add(existingDetail);
+            //        //}
+            //        //else
+            //        //{
+            //        //    existingDetail.TrendyolProductId = item.id;
+            //        //    existingDetail.IsApproved = item.approved;
+            //        //    existingDetail.IsOnSale = item.onSale;
+            //        //    existingDetail.ProductUrl = item.productUrl;
+
+            //        //}
+
+            //    }
+            //}
+            //await _context.SaveChangesAsync();
+        }
+
+        private ProductTrendyol ProductContentToProductTrendyol(ProductContent item)
+        {
+            return new ProductTrendyol
+            {
+                TrendyolProductId = item.id,
+                IsApproved = item.approved,
+                IsOnSale = item.onSale,
+                ProductUrl = item.productUrl,
+            };
+        }
 
         public async Task<Product> CreateProductAsync(ProductViewModel model)
         {
@@ -192,7 +549,7 @@ namespace Pazaryeri.Repositories
                 var product = new Product
                 {
                     Title = model.Title,
-                    ProductMainId = model.ProductMainId,
+                    TrendyolProductMainId = model.ProductMainId,
                     ProductCode = model.ProductCode,
                     Description = model.Description,
                     Price = model.Price,
@@ -290,7 +647,7 @@ namespace Pazaryeri.Repositories
                     {
                         ProductId = productId,
                         ImageUrl = imageUrl,
-                        IsMainImage = false, // İlk resmi main yapabilirsiniz
+                        IsMainImage = false,
                         SortOrder = 0,
                         CreatedDate = DateTime.Now
                     };
@@ -337,7 +694,6 @@ namespace Pazaryeri.Repositories
 
             try
             {
-                // 1. MEVCUT ÜRÜNÜ BUL
                 var product = await _context.Products
                     .Include(p => p.Attributes)
                     .Include(p => p.Variants)
@@ -348,9 +704,8 @@ namespace Pazaryeri.Repositories
                 if (product == null)
                     throw new Exception("Ürün bulunamadı!");
 
-                // 2. ANA ÜRÜN BİLGİLERİNİ GÜNCELLE
                 product.Title = model.Title;
-                product.ProductMainId = model.ProductMainId;
+                product.TrendyolProductMainId = model.ProductMainId;
                 product.ProductCode = model.ProductCode;
                 product.Description = model.Description;
                 product.Price = model.Price;
@@ -360,7 +715,6 @@ namespace Pazaryeri.Repositories
                 product.TrendyolCargoId = model.TrendyolCargoId.Value;
                 product.UpdatedDate = DateTime.Now;
 
-                // 3. ÜRÜN ATTRIBUTE'LARINI GÜNCELLE (SİL ve YENİDEN EKLE)
                 var existingAttributes = _context.ProductAttributes
                     .Where(pa => pa.ProductId == product.Id);
                 _context.ProductAttributes.RemoveRange(existingAttributes);
@@ -380,10 +734,8 @@ namespace Pazaryeri.Repositories
                     }
                 }
 
-                // 4. VARYASYON İŞLEMLERİ
                 await UpdateProductVariants(product.Id, model);
 
-                // 5. YENİ RESİMLERİ EKLE
                 if (model.TempProductImageUrls != null && model.TempProductImageUrls.Any())
                 {
                     await SaveProductImages(product.Id, model.TempProductImageUrls);

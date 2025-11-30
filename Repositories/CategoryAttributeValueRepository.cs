@@ -20,5 +20,11 @@ namespace Pazaryeri.Repositories
                 .Include(c=>c.CategoryAttribute)
                 .FirstOrDefaultAsync(o => o.Id == id);
         }
+
+        public async Task<CategoryAttributeValue> GetByAttributeValueId(int? valueId)
+        {
+            if(valueId==null) return null;
+            return await _context.CategoryAttributeValue.FirstOrDefaultAsync(o=>o.CategoryAttributeValueId == valueId);
+        }
     }
 }

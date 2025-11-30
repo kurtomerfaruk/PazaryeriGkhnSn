@@ -175,21 +175,17 @@
         let variantCounter = 0;
         let currentVariationAttributes = [];
 
-        // Sayfa yüklendiğinde
         $(document).ready(function () {
             // ÖNCE attributes'ları kontrol et ve render et
             var categoryAttributes = @Html.Raw(Json.Serialize(Model.CategoryAttributes ?? new List<Pazaryeri.ViewModels.CategoryAttributeViewModel>()));
             var attributeValues = @Html.Raw(Json.Serialize(Model.AttributeValues ?? new Dictionary<int, string>()));
-
             // Eğer CategoryAttributes varsa, hemen render et
             if (categoryAttributes && categoryAttributes.length > 0) {
                 renderAttributes(categoryAttributes, attributeValues);
                 updateVariationAttributes(categoryAttributes);
             }
 
-            // Varyasyonları yükle
             var initialVariants = @Html.Raw(Json.Serialize(Model?.Variants ?? new List<Pazaryeri.ViewModels.ProductVariantViewModel>()));
-            console.log('Edit - Initial Variants:', initialVariants);
 
             if (initialVariants && initialVariants.length > 0) {
                 // Mevcut varyasyonlardan en yüksek tempId'yi bul
@@ -426,6 +422,7 @@
                         html += '<option value="">Seçiniz</option>';
 
                         attr.values.forEach(value => {
+
                             let selected = '';
                             if (multiple) {
                                 if (attributeValue && Array.isArray(attributeValue)) {
@@ -435,6 +432,7 @@
                                     selected = valuesArray.includes(value.id.toString()) ? 'selected' : '';
                                 }
                             } else {
+                                console.log("attributeValue:" + attributeValue + "-valueId:" + value.id);
                                 selected = (attributeValue == value.id.toString()) ? 'selected' : '';
                             }
                             html += `<option value="${value.id}" ${selected}>${value.name}</option>`;

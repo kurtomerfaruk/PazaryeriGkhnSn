@@ -8,7 +8,6 @@
         public string Value { get; set; }
         public DateTime CreatedDate { get; set; } = DateTime.Now;
 
-        // Navigation properties
         public virtual Product Product { get; set; }
     }
 }

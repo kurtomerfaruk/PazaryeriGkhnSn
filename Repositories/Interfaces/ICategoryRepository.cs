@@ -9,5 +9,6 @@ namespace Pazaryeri.Repositories.Interfaces
         Task<List<int>> GetExistingCategoryIdsAsync();
         Task BulkInsertAsync(List<Category> categories);
         Task<CategoryDto?> GetCategoryWithAttributesAsync(int categoryId);
+        Task<Category> GetByCategoryIdAsync(int categoryId);
     }
 }

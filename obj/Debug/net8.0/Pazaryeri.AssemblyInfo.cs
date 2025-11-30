@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Pazaryeri")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d886de0f04edde400ae446997d418d25e2793f7e")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a65c7b8785992c5e922d14c9da97244ee3fc925b")]
 [assembly: System.Reflection.AssemblyProductAttribute("Pazaryeri")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Pazaryeri")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

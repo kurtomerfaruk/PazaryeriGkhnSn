@@ -10,15 +10,20 @@
     </div>
     <div class="content-header-right col-md-6 col-12">
 
-        <div class="dropdown float-md-right">
-            <a href="/Product/Create" class="btn btn-primary">Ekle</a>
-            <button class="btn btn-primary dropdown-toggle px-2" id="dropdownBreadcrumbButton" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Ürünleri Çek</button>
+        <!--<div class="dropdown float-md-right">
+        <a href="/Product/Create" class="btn btn-primary">Ekle</a>
+        <a class="dropdown-item fetch-platform btn btn-primary" href="#" data-platform="Trendyol">Trendyol'dan ürün Çek</a>-->
+        @*<button class="btn btn-primary dropdown-toggle px-2" id="dropdownBreadcrumbButton" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Ürünleri Çek</button>
             <div class="dropdown-menu" aria-labelledby="dropdownBreadcrumbButton">
                 @foreach (var platform in ViewBag.Platforms)
                 {
                     <a class="dropdown-item fetch-platform" href="#" data-platform="@platform">@platform</a>
                 }
-            </div>
+            </div>*@
+        <!--</div>-->
+        <div class="btn-group float-right" role="group" aria-label="Button Group">
+            <a href="/Product/Create" class="btn btn-primary">Ekle</a>
+            <a href="#" class="btn btn-info fetch-platform">Trendyoldan Ürün Çek</a>
         </div>
     </div>
 </div>
@@ -100,10 +105,7 @@
                     {
                         data: 'actions',
                         render: function (data, type, row) {
-                            var html =`<button class="btn btn-sm btn-info details-btn" data-id="${row.id}" data-toggle="tooltip" title="Detay">
-                                        <i class="la la-eye"></i>
-                                    </button>
-                                    <a href="/Product/Edit/${row.id}" class="btn btn-warning btn-sm">Güncelle</a>
+                            var html =`<a href="/Product/Edit/${row.id}" class="btn btn-warning btn-sm">Güncelle</a>
                                     <button class="btn btn-sm btn-info trendyol-update-btn" data-id="${row.id}" data-toggle="tooltip" title="Trendyol'a Gönder">
                                         <i class="la la-send"></i>
                                     </button>
@@ -124,13 +126,11 @@
             $('.fetch-platform').click(function (e) {
                 e.preventDefault();
                 var platform = $(this).data('platform');
-                var $btn = $('.btn-primary.dropdown-toggle');
+                var $btn = $('.fetch-platform');
 
                 $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Çekiliyor...');
 
-                var url = platform === 'Trendyol'
-                    ? '@Url.Action("FetchTrendyolProducts")'
-                    : '';
+                var url = '@Url.Action("FetchTrendyolProducts")';
 
                 var data = platform === 'all' ? {} : { platform: platform };
 
@@ -155,7 +155,7 @@
                         toastr.error('Ürünler çekilirken hata oluştu.');
                     })
                     .always(function () {
-                        $btn.prop('disabled', false).html('<i class="fas fa-sync"></i> Ürünleri Çek');
+                        $btn.prop('disabled', false).html('<i class="fas fa-sync"></i>Trendyoldan Ürün Çek');
                     });
             });
 
@@ -170,8 +170,6 @@
                 $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Gönderiliyor...');
 
                 var url ='@Url.Action("SendTrendyol")';
-
-
 
                 $.post(url, data)
                     .done(function (response) {

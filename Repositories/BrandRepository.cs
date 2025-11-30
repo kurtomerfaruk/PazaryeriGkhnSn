@@ -44,7 +44,7 @@ namespace Pazaryeri.Repositories
                  .FirstOrDefaultAsync(o => o.Id == id);
         }
 
-       
+
 
         public async Task<Brand> UpdateAsync(Brand entity)
         {
@@ -100,8 +100,27 @@ namespace Pazaryeri.Repositories
 
         public async Task<Brand> BrandExistsAsync(string brandName)
         {
-            return await _context.Brands
-                .FirstOrDefaultAsync(o => o.Name == brandName);
+            return await _context.Brands.FirstOrDefaultAsync(o => o.Name == brandName);
+        }
+
+        public async Task<Brand> GetOrCreateAsync(int trendyolBrandId, string name)
+        {
+            var brand = await _context.Brands
+                .FirstOrDefaultAsync(b => b.BrandId == trendyolBrandId);
+
+            if (brand != null)
+                return brand;
+
+            brand = new Brand
+            {
+                BrandId = trendyolBrandId,
+                Name = name,
+            };
+
+            _context.Brands.Add(brand);
+            await _context.SaveChangesAsync();
+
+            return brand;
         }
     }
 }

@@ -5,5 +5,6 @@
         Task<string> UploadImageAsync(IFormFile file);
         Task<List<string>> UploadImagesAsync(List<IFormFile> files);
         Task<bool> DeleteImageAsync(string imageUrl);
+        Task<string> ImportImageFromUrlAsync(string imageUrl);
     }
 }

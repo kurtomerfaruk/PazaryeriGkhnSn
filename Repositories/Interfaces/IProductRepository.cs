@@ -1,4 +1,5 @@
-﻿using Pazaryeri.Models;
+﻿using Pazaryeri.Entity.Trendyol.Products;
+using Pazaryeri.Models;
 using Pazaryeri.ViewModels;
 
 namespace Pazaryeri.Repositories.Interfaces
@@ -10,7 +11,7 @@ namespace Pazaryeri.Repositories.Interfaces
         Task<Product> GetWithDetailsAsync(int id);
         Task<Product> GetByProductMainIdAsync(string productMainId);
         Task<bool> ProductExistsAsync(string productMainId);
-        //Task SaveGroup(List<IGrouping<string, TrendyolProductDetail>> Values);
+        Task SaveGroup(List<IGrouping<string, ProductContent>> Values);
         Task<Product> CreateProductAsync(ProductViewModel model);
         Task<Product> UpdateProductAsync(ProductViewModel model);
         Task<Product> GetProductByIdAsync(int id);

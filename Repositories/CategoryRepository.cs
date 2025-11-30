@@ -147,5 +147,12 @@ namespace Pazaryeri.Repositories
 
             return dto;
         }
+
+        public async Task<Category> GetByCategoryIdAsync(int categoryId)
+        {
+            return await _context.Categories.FirstAsync(c=>c.CategoryId == categoryId);
+        }
     }
+
+
 }

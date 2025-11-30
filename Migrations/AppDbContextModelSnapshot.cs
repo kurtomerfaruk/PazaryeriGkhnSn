@@ -243,9 +243,6 @@ namespace Pazaryeri.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.Property<string>("ProductMainId")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<int>("StockQuantity")
                         .HasColumnType("int");
 
@@ -257,7 +254,7 @@ namespace Pazaryeri.Migrations
                     b.Property<int>("TrendyolCargoId")
                         .HasColumnType("int");
 
-                    b.Property<string>("TrendyolProductId")
+                    b.Property<string>("TrendyolProductMainId")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("UpdatedDate")
@@ -328,6 +325,39 @@ namespace Pazaryeri.Migrations
                     b.HasIndex("ProductId");
 
                     b.ToTable("ProductImages");
+                });
+
+            modelBuilder.Entity("Pazaryeri.Models.ProductTrendyol", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("BatchRequestId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsApproved")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsOnSale")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ProductUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TrendyolProductId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("ProductTrendyol");
                 });
 
             modelBuilder.Entity("Pazaryeri.Models.ProductVariant", b =>
@@ -419,6 +449,9 @@ namespace Pazaryeri.Migrations
 
                     b.Property<int>("ProductVariantId")
                         .HasColumnType("int");
+
+                    b.Property<string>("TrendyolImageUrl")
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -714,6 +747,17 @@ namespace Pazaryeri.Migrations
                     b.Navigation("Product");
                 });
 
+            modelBuilder.Entity("Pazaryeri.Models.ProductTrendyol", b =>
+                {
+                    b.HasOne("Pazaryeri.Models.Product", "Product")
+                        .WithMany("Trendyols")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+                });
+
             modelBuilder.Entity("Pazaryeri.Models.ProductVariant", b =>
                 {
                     b.HasOne("Pazaryeri.Models.Product", "Product")
@@ -787,6 +831,8 @@ namespace Pazaryeri.Migrations
                     b.Navigation("Attributes");
 
                     b.Navigation("Images");
+
+                    b.Navigation("Trendyols");
 
                     b.Navigation("Variants");
                 });

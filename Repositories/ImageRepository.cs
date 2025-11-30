@@ -96,5 +96,42 @@ namespace Pazaryeri.Repositories
                 return false;
             }
         }
+
+        public async Task<string> ImportImageFromUrlAsync(string imageUrl)
+        {
+            var formFile = await DownloadImageAsFormFileAsync(imageUrl);
+
+            var uploadedPath = await UploadImageAsync(formFile);
+
+            return uploadedPath; 
+        }
+
+        private async Task<IFormFile> DownloadImageAsFormFileAsync(string imageUrl, string fileName = null)
+        {
+            using var httpClient = new HttpClient();
+            var bytes = await httpClient.GetByteArrayAsync(imageUrl);
+
+            var stream = new MemoryStream(bytes);
+
+            string extension = Path.GetExtension(imageUrl);
+            fileName ??= Guid.NewGuid() + extension;
+
+            return new FormFile(stream, 0, stream.Length, "file", fileName)
+            {
+                Headers = new HeaderDictionary(),
+                ContentType = GetContentType(extension)
+            };
+        }
+
+        private string GetContentType(string extension)
+        {
+            return extension.ToLower() switch
+            {
+                ".jpg" or ".jpeg" => "image/jpeg",
+                ".png" => "image/png",
+                ".gif" => "image/gif",
+                _ => "application/octet-stream"
+            };
+        }
     }
 }

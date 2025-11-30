@@ -1,7 +1,6 @@
 ﻿using ClosedXML.Excel;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Newtonsoft.Json;
 using Pazaryeri.Dtos;
 using Pazaryeri.Entity.Trendyol;
 using Pazaryeri.Entity.Trendyol.Products;
@@ -25,7 +24,6 @@ namespace Pazaryeri.Controllers
         private readonly ICategoryRepository _categoryRepository;
         private readonly ICategoryAttributeRepository _categoryAttributeRepository;
         private readonly ICategoryAttributeValueRepository _categoryAttributeValueRepository;
-        //private readonly ITrendyolProductDetailRepository _trendyolProductDetailRepository;
         private readonly IPlatformServiceFactory _platformServiceFactory;
         private readonly ILogger<ProductController> _logger;
         private readonly IConfiguration _configuration;
@@ -101,38 +99,33 @@ namespace Pazaryeri.Controllers
         [HttpPost]
         public async Task<IActionResult> FetchTrendyolProducts()
         {
-            //try
-            //{
-            //    var trendyolService = _platformServiceFactory.GetTrendyolService();
-            //    var productGroups = await trendyolService.GetGroupedProductsAsync();
-            //    int addedProducts = 0;
-            //    int updatedProducts = 0;
-            //    int addedDetails = 0;
-            //    int updatedDetails = 0;
-
-            //    await _productRepository.SaveGroup(productGroups);
-
-            //    return Json(new
-            //    {
-            //        success = true,
-            //        message = $"Trendyol için {addedProducts} yeni ürün eklendi, {updatedProducts} ürün güncellendi. " +
-            //                 $"{addedDetails} yeni detay eklendi, {updatedDetails} detay güncellendi."
-            //    });
-            //}
-            //catch (Exception ex)
-            //{
-            //    return Json(new
-            //    {
-            //        success = false,
-            //        message = $"Trendyol ürünleri çekilirken hata: {ex.Message}"
-            //    });
-            //}
-
-            return Json(new
+            try
             {
-                success = false,
-                message = $"Trendyol ürünleri çekilirken hata: "
-            });
+                var trendyolService = _platformServiceFactory.GetTrendyolService();
+                var productGroups = await trendyolService.GetGroupedProductsAsync();
+                int addedProducts = 0;
+                int updatedProducts = 0;
+                int addedDetails = 0;
+                int updatedDetails = 0;
+
+                await _productRepository.SaveGroup(productGroups);
+
+                return Json(new
+                {
+                    success = true,
+                    message = $"Trendyol için {addedProducts} yeni ürün eklendi, {updatedProducts} ürün güncellendi. " +
+                             $"{addedDetails} yeni detay eklendi, {updatedDetails} detay güncellendi."
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = $"Trendyol ürünleri çekilirken hata: {ex.Message}"
+                });
+            }
+
         }
 
         [HttpPost]
@@ -205,7 +198,7 @@ namespace Pazaryeri.Controllers
                 {
                     barcode = item.Barcode,
                     title = product.Title,
-                    productMainId = product.ProductMainId,
+                    productMainId = product.TrendyolProductMainId,
                     brandId = product.Brand.BrandId,
                     categoryId = product.Category.CategoryId,
                     quantity = item.StockQuantity,
@@ -373,6 +366,7 @@ namespace Pazaryeri.Controllers
         [HttpGet]
         public async Task<IActionResult> Create()
         {
+            SetActiveMenu("Product");
             var model = new ProductViewModel
             {
                 Variants = new List<ProductVariantViewModel>(),
@@ -681,6 +675,7 @@ namespace Pazaryeri.Controllers
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
+            SetActiveMenu("Product");
             var product = await _productRepository.GetProductByIdAsync(id);
             if (product == null)
             {
@@ -802,7 +797,7 @@ namespace Pazaryeri.Controllers
             {
                 Id = product.Id,
                 ProductCode = product.ProductCode,
-                ProductMainId = product.ProductMainId,
+                ProductMainId = product.TrendyolProductMainId,
                 Title = product.Title,
                 Description = product.Description,
                 Price = product.Price,
