@@ -145,6 +145,8 @@ namespace Pazaryeri.Controllers
             }
         }
 
+
+
         [HttpPost]
         public async Task<IActionResult> FetchTrendyolCategoryAttributes(int categoryId,int trendyolCategoryId)
         {
@@ -177,6 +179,65 @@ namespace Pazaryeri.Controllers
                     };
 
                     categoryAttributes.Add(categoryAttribute);
+                }
+
+                await _categoryAttributeRepository.AddOrUpdateRangeAsync(categoryAttributes);
+                await _categoryAttributeRepository.SaveChangesAsync();
+
+                return Json(new
+                {
+                    success = true,
+                    message = $"Trendyol kategori özellikleri güncellendi."
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = $"Trendyol kategoriler çekilirken hata: {ex.Message}"
+                });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> FetchTrendyolAllCategoryAttributes()
+        {
+            try
+            {
+                var trendyolService = _platformServiceFactory.GetTrendyolService();
+
+                List<Category> categories = await _categoryRepository.GetAllAsync();
+                List<Models.CategoryAttribute> categoryAttributes = new List<Models.CategoryAttribute>();
+                foreach (var cat in categories.Take(10))
+                {
+                    if (string.IsNullOrEmpty(cat.ParentCategoryId))
+                    {
+                        continue;
+                    }
+                    TrendyolCategoryAttributes attributes = await trendyolService.GetCategoryAttributesAsync(cat.CategoryId);
+                    
+                    foreach (var attribute in attributes.categoryAttributes)
+                    {
+                        Models.CategoryAttribute categoryAttribute = new Models.CategoryAttribute
+                        {
+                            CategoryAttributeId = attribute.attribute.id,
+                            Name = attribute.attribute.name,
+                            AllowCustom = attribute.allowCustom,
+                            Required = attribute.required,
+                            Varianter = attribute.varianter,
+                            Slicer = attribute.slicer,
+                            AllowMultipleAttributeValues = attribute.allowMultipleAttributeValues,
+                            Category = cat,
+                            Values = attribute.attributeValues.Select(v => new CategoryAttributeValue
+                            {
+                                CategoryAttributeValueId = v.id,
+                                Name = v.name
+                            }).ToList()
+                        };
+
+                        categoryAttributes.Add(categoryAttribute);
+                    }
                 }
 
                 await _categoryAttributeRepository.AddOrUpdateRangeAsync(categoryAttributes);

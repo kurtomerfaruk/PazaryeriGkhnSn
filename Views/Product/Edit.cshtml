@@ -399,7 +399,6 @@
             let html = '<div class="row">';
 
             attributes.forEach(attr => {
-                console.log(attr.id);
                 if (!attr.varianter) {
                     html += `<div class="col-md-6"><div class="form-group">
                         <label>${attr.name} ${attr.required ? '<span style="color:red">*</span>' : ''}</label>`;
@@ -427,7 +426,6 @@
                                     selected = valuesArray.includes(value.id.toString()) ? 'selected' : '';
                                 }
                             } else {
-                                console.log("attributeValue:" + attributeValue + "-valueId:" + value.id);
                                 selected = (attributeValue == value.id.toString()) ? 'selected' : '';
                             }
                             html += `<option value="${value.id}" ${selected}>${value.name}</option>`;
@@ -555,21 +553,24 @@
         }
 
         function showTempVariantImages(variantId, container) {
-    var tempImageUrls = @Html.Raw(Json.Serialize(Model.TempVariantImageUrls ?? new Dictionary<int, List<string>>()));
+            var tempImageUrls = @Html.Raw(Json.Serialize(Model.TempVariantImageUrls ?? new Dictionary<int, List<string>>()));
+            console.log(tempImageUrls);
+            console.log(tempImageUrls[variantId]);
+            console.log(variantId);
 
-    if (tempImageUrls && tempImageUrls[variantId]) {
-        var previewContainer = container.find('.variant-image-preview');
-        previewContainer.empty();
+            if (tempImageUrls && tempImageUrls[variantId]) {
+                var previewContainer = container.find('.variant-image-preview');
+                previewContainer.empty();
 
-        tempImageUrls[variantId].forEach(function(imageUrl) {
-            previewContainer.append(`
-                <div class="image-preview-item mb-2">
-                    <img src="${imageUrl}" alt="Preview" style="max-width: 80px; max-height: 80px;" class="img-thumbnail" />
-                    <input type="hidden" name="TempVariantImageUrls[${variantId}]" value="${imageUrl}" />
-                </div>
-            `);
-        });
-    }
-}
+                tempImageUrls[variantId].forEach(function(imageUrl) {
+                    previewContainer.append(`
+                        <div class="image-preview-item mb-2">
+                            <img src="${imageUrl}" alt="Preview" style="max-width: 80px; max-height: 80px;" class="img-thumbnail" />
+                            <input type="hidden" name="TempVariantImageUrls[${variantId}]" value="${imageUrl}" />
+                        </div>
+                    `);
+                });
+            }
+        }
     </script>
 }

@@ -10,6 +10,7 @@
     </div>
     <div class="content-header-right col-md-6 col-12">
         <div class="dropdown float-md-right">
+            <button class="btn btn-info all-category-attribute">Kategori Özellikleri Güncelle</button>
             <button class="btn btn-primary dropdown-toggle px-2" id="dropdownBreadcrumbButton" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Kategorileri Çek</button>
             <div class="dropdown-menu" aria-labelledby="dropdownBreadcrumbButton">
                 @foreach (var platform in ViewBag.Platforms)
@@ -117,6 +118,33 @@
                     })
                     .always(function () {
                         $btn.prop('disabled', false).html('<i class="fas fa-sync"></i> Kategorileri Çek');
+                    });
+            });
+
+        $('.all-category-attribute').click(function (e) {
+                e.preventDefault();
+            var $btn = $('.all-category-attribute');
+
+                $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Çekiliyor...');
+
+                var url = '@Url.Action("FetchTrendyolAllCategoryAttributes")';
+
+        var data = { };
+
+                $.post(url, data)
+                    .done(function (response) {
+                        if (response.success) {
+                            table.ajax.reload();
+                            toastr.success(response.message);
+                        } else {
+                            toastr.error(response.message);
+                        }
+                    })
+                    .fail(function () {
+                        toastr.error('Kategori özellikleri çekilirken hata oluştu.');
+                    })
+                    .always(function () {
+                        $btn.prop('disabled', false).html('<i class="fas fa-sync"></i> Kategori özellikleri Çek');
                     });
             });
 

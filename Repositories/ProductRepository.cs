@@ -57,7 +57,7 @@ namespace Pazaryeri.Repositories
 
         public async Task<(List<Product> Items, int TotalCount)> GetPagedAsync(int start, int length, string search, string sortColumn, string sortDirection)
         {
-            var query = _context.Products.Include(c=>c.Trendyols).AsQueryable();
+            var query = _context.Products.Include(c => c.Trendyols).AsQueryable();
 
             if (!string.IsNullOrEmpty(search))
             {
@@ -106,8 +106,7 @@ namespace Pazaryeri.Repositories
 
         public async Task<Product> ProductsExistsAsync(string title, Platform platform)
         {
-            return await _context.Products
-                 .FirstOrDefaultAsync(o => o.Title == title);
+            return await _context.Products.FirstOrDefaultAsync(o => o.Title == title);
         }
 
         public async Task<Product> UpdateAsync(Product entity)
@@ -119,8 +118,7 @@ namespace Pazaryeri.Repositories
 
         public async Task<Product> GetByProductMainIdAsync(string productMainId)
         {
-            return await _context.Products
-                .FirstOrDefaultAsync(p => p.Title == productMainId);
+            return await _context.Products.FirstOrDefaultAsync(p => p.TrendyolProductMainId == productMainId);
         }
 
         public async Task<Product> CreateAsync(Product product)
@@ -132,8 +130,7 @@ namespace Pazaryeri.Repositories
 
         public async Task<bool> ProductExistsAsync(string productMainId)
         {
-            return await _context.Products
-                .AnyAsync(p => p.Title == productMainId);
+            return await _context.Products.AnyAsync(p => p.TrendyolProductMainId == productMainId);
         }
 
         public async Task SaveGroup(List<IGrouping<string, ProductContent>> groupedProducts)
@@ -174,9 +171,9 @@ namespace Pazaryeri.Repositories
                     {
                         IsApproved = mainItem.approved,
                         IsOnSale = mainItem.onSale,
-                        BatchRequestId=mainItem.batchRequestId,
-                        TrendyolProductId=mainItem.id,
-                        ProductUrl=mainItem.productUrl,
+                        BatchRequestId = mainItem.batchRequestId,
+                        TrendyolProductId = mainItem.id,
+                        ProductUrl = mainItem.productUrl,
                     });
 
                     int tempId = 1;
@@ -213,10 +210,11 @@ namespace Pazaryeri.Repositories
 
                         foreach (var attr in item.attributes)
                         {
-                            var attribute = await _categoryAttributeRepository.GetByAttributeIdByCategoryId(attr.attributeId,category.Id);
+                            var attribute = await _categoryAttributeRepository.GetByAttributeIdByCategoryId(attr.attributeId, category.Id);
                             if (attribute == null)
                             {
-                                throw new Exception("Kategori Özelliklerini güncelleyin");
+                                continue;
+                                throw new Exception("Kategori Özelliklerini güncelleyin:" + category.Title + "--" + category.CategoryId);
                             }
 
                             if (attribute.Varianter)
@@ -230,8 +228,8 @@ namespace Pazaryeri.Repositories
                             }
                             else
                             {
-                                
-                                var attributeValue = await _categoryAttributeValueRepository.GetByAttributeValueIdByCategoryId(attr.attributeValueId,attribute.Id);
+
+                                var attributeValue = await _categoryAttributeValueRepository.GetByAttributeValueIdByCategoryId(attr.attributeValueId, attribute.Id);
 
                                 var existingAttr = newProduct.Attributes.FirstOrDefault(a => a.AttributeId == attribute.Id);
 
@@ -295,12 +293,12 @@ namespace Pazaryeri.Repositories
                                     ImageUrl = filePath
                                 });
                             }
-                            
+
                         }
 
                         foreach (var attr in item.attributes)
                         {
-                            var attribute = await _categoryAttributeRepository.GetByAttributeIdByCategoryId(attr.attributeId,existingProduct.CategoryId);
+                            var attribute = await _categoryAttributeRepository.GetByAttributeIdByCategoryId(attr.attributeId, existingProduct.CategoryId);
                             if (attribute == null)
                             {
                                 throw new Exception("Kategori Özelliklerini güncelleyin");
@@ -308,7 +306,7 @@ namespace Pazaryeri.Repositories
 
                             if (attribute.Varianter)
                             {
-                                var attributeValue = await _categoryAttributeValueRepository.GetByAttributeValueIdByCategoryId(attr.attributeValueId,attribute.Id);
+                                var attributeValue = await _categoryAttributeValueRepository.GetByAttributeValueIdByCategoryId(attr.attributeValueId, attribute.Id);
                                 variant.VariantAttributes.Add(new ProductVariantAttribute
                                 {
                                     AttributeId = attribute.Id,
@@ -351,7 +349,7 @@ namespace Pazaryeri.Repositories
 
             await _context.SaveChangesAsync();
 
-            
+
         }
 
 
@@ -412,7 +410,7 @@ namespace Pazaryeri.Repositories
                         };
 
                         _context.ProductVariants.Add(variant);
-                        await _context.SaveChangesAsync(); 
+                        await _context.SaveChangesAsync();
 
                         if (variantModel.VariationAttributes != null && variantModel.VariationAttributes.Any())
                         {
@@ -673,7 +671,7 @@ namespace Pazaryeri.Repositories
                 .Include(p => p.Variants).ThenInclude(v => v.VariantImages)
                 .Include(p => p.Variants).ThenInclude(c => c.VariantAttributes)
                 .Include(p => p.Attributes)
-                .Include(p=>p.Trendyols)
+                .Include(p => p.Trendyols)
             .FirstOrDefaultAsync(p => p.Id == id);
         }
 

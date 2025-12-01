@@ -140,8 +140,6 @@
             }
 
             function showClaimDetailsModal(data) {
-                console.log(data.trendyols[0]);
-                // Modal HTML'i oluştur
                 var modalHtml = `
                             <div class="modal fade" id="claimDetailsModal" tabindex="-1">
                                 <div class="modal-dialog modal-xl">
@@ -220,12 +218,13 @@
                                                         </div>
                                                     </div>
                                                     <div class="table-responsive">
-                                                        <table class="table table-striped table-sm">
+                                                        <table id="claimDetailTable" class="table table-striped table-sm">
                                                             <thead>
                                                                 <tr>
                                                                     <th>Müşteri İade Nedeni</th>
                                                                     <th>Trendyol İade Nedeni</th>
                                                                     <th>Durum</th>
+                                                                    <th>İşlem</th>
                                                                 </tr>
                                                             </thead>
                                                             <tbody>
@@ -235,6 +234,8 @@
                                                                             <td>${claim.customerClaimItemReason.name}</td>
                                                                             <td>${claim.trendyolClaimItemReason.name}</td>
                                                                             <td>${claim.claimItemStatus.name}</td>
+                                                                            <td>${claim.claimItemStatus.name == "WaitingInAction" ? '<button class="btn btn-info approve-claim" data-claimid="${data.claim.id}" data-lineid="${claim.id}"><i class="la la-check"></id></button>' :''}</td>
+                                                                          
                                                                         </tr>
                                                                     `).join('')}
                                                                  `).join('')}
@@ -259,7 +260,33 @@
                 $('#claimDetailsModal').on('hidden.bs.modal', function () {
                     $(this).remove();
                 });
+
+                $(".approve-claim").on('click', function () {
+                    var claimId = $(this).data("claimid");
+                    var lineId = $(this).data("lineid");
+
+                    var data = { claimId: claimId, lineId: lineId };
+                    var url = '@Url.Action("TrendyolApproveClaim")';
+
+                    $.post(url, data)
+                        .done(function (response) {
+                            if (response.success) {
+                                table.ajax.reload();
+                                toastr.success(response.message);
+                            } else {
+                                toastr.error(response.message);
+                            }
+                        })
+                        .fail(function () {
+                            toastr.error('Kategoriler çekilirken hata oluştu.');
+                        })
+                        .always(function () {
+                            $btn.prop('disabled', false).html('<i class="la la-check"></i>');
+                        });
+                })
             }
+
+
         });
     </script>
 

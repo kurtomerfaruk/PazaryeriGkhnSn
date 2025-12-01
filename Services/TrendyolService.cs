@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using DocumentFormat.OpenXml.Drawing.Charts;
+using Newtonsoft.Json;
 using Pazaryeri.Entity.Trendyol;
 using Pazaryeri.Entity.Trendyol.Categories;
 using Pazaryeri.Entity.Trendyol.CategoryAttribute;
@@ -44,14 +45,14 @@ namespace Pazaryeri.Services
             _client.AddDefaultHeader("User-Agent", $"{supplierId} - SelfIntegration");
         }
 
-        public async Task<List<Order>> GetOrdersAsync(int page = 0, int size = 200)
+        public async Task<List<Models.Order>> GetOrdersAsync(int page = 0, int size = 200)
         {
             return await GetAllOrdersRecursiveAsync(page, size);
         }
 
-        private async Task<List<Order>> GetAllOrdersRecursiveAsync(int page = 0, int size = 200)
+        private async Task<List<Models.Order>> GetAllOrdersRecursiveAsync(int page = 0, int size = 200)
         {
-            var allOrders = new List<Order>();
+            var allOrders = new List<Models.Order>();
             int currentPage = page;
 
             do
@@ -102,7 +103,7 @@ namespace Pazaryeri.Services
             return allOrders;
         }
 
-        public async Task<bool> UpdateOrderStatus(Order order)
+        public async Task<bool> UpdateOrderStatus(Models.Order order)
         {
             try
             {
@@ -128,7 +129,7 @@ namespace Pazaryeri.Services
                     status = "Picking"
                 };
 
-                string json = JsonConvert.SerializeObject(myObject, Formatting.Indented);
+                string json = JsonConvert.SerializeObject(myObject, Newtonsoft.Json.Formatting.Indented);
 
                 request.AddJsonBody(json);
 
@@ -184,9 +185,9 @@ namespace Pazaryeri.Services
             }
         }
 
-        private Order CreateOrderFromTrendyol(OrderContent trendyolOrder)
+        private Models.Order CreateOrderFromTrendyol(OrderContent trendyolOrder)
         {
-            return new Order
+            return new Models.Order
             {
                 OrderId = trendyolOrder.id.ToString(),
                 OrderNumber = trendyolOrder.orderNumber,
@@ -775,28 +776,57 @@ namespace Pazaryeri.Services
 
         private Claim CreateClaimFromTrendyol(ClaimContent content)
         {
-                        return new Claim
+            return new Claim
             {
                 TrendyolClaimId = content.id,
                 OrderNumber = content.orderNumber,
                 OrderDate = Util.LongToDatetime(content.orderDate),
-                CustomerName = content.customerFirstName+ " "+ content.customerLastName,
+                CustomerName = content.customerFirstName + " " + content.customerLastName,
                 ClaimDate = Util.LongToDatetime(content.claimDate),
                 CargoTrackingNumber = content.cargoTrackingNumber.ToString(),
                 CargoName = content.cargoProviderName,
-                OrderShipmentPackageId = content.orderShipmentPackageId.ToString()  ,
+                OrderShipmentPackageId = content.orderShipmentPackageId.ToString(),
                 LastModifiedDate = Util.LongToDatetime(content.lastModifiedDate),
-                Trendyols = new List<TrendyolClaim> 
+                Trendyols = new List<TrendyolClaim>
                 {
                     new TrendyolClaim
                     {
                         TrendyolClaimId= content.id,
                         Items = JsonConvert.SerializeObject(content.items)
-                        
+
                     }
                 },
                 Platform = Platform.Trendyol
             };
+        }
+
+        public async Task<bool> ClaimApproveAsync(string claimId, string claimItemId)
+        {
+            try
+            {
+                var request = new RestRequest($"order/sellers/{_configuration["Trendyol:SupplierId"]}/claims/{claimId}/items/approve", Method.Put);
+
+
+                var linesList = new List<dynamic>();
+
+                dynamic myObject = new
+                {
+                    claimLineItemIdList = new List<string> { claimItemId },
+                    @params = new { },
+                };
+
+                string json = JsonConvert.SerializeObject(myObject, Newtonsoft.Json.Formatting.Indented);
+
+                request.AddJsonBody(json);
+
+                var response = await _client.ExecuteAsync(request);
+                return response.IsSuccessful;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Trendyol claim update error: ");
+                return false;
+            }
         }
     }
 }

@@ -108,18 +108,13 @@ namespace Pazaryeri.Controllers
             {
                 var trendyolService = _platformServiceFactory.GetTrendyolService();
                 var productGroups = await trendyolService.GetGroupedProductsAsync();
-                int addedProducts = 0;
-                int updatedProducts = 0;
-                int addedDetails = 0;
-                int updatedDetails = 0;
 
                 await _productRepository.SaveGroup(productGroups);
 
                 return Json(new
                 {
                     success = true,
-                    message = $"Trendyol için {addedProducts} yeni ürün eklendi, {updatedProducts} ürün güncellendi. " +
-                             $"{addedDetails} yeni detay eklendi, {updatedDetails} detay güncellendi."
+                    message = $"Trendyol ürünler güncellendi."
                 });
             }
             catch (Exception ex)
@@ -866,6 +861,7 @@ namespace Pazaryeri.Controllers
                 CategoryId = product.CategoryId,
                 TrendyolCargoId = product.TrendyolCargoId,
                 TempProductImageUrls = product.Images.Select(c => c.ImageUrl).ToList(),
+                //TempVariantImageUrls = product.Variants.SelectMany(v => v.VariantImages).GroupBy(vi => vi.ProductVariantId).ToDictionary(g => g.Key, g => g.Select(c => c.ImageUrl).ToList()),
                 TempVariantImageUrls = product.Variants.SelectMany(v => v.VariantImages).GroupBy(vi => vi.ProductVariantId).ToDictionary(g => g.Key, g => g.Select(c => c.ImageUrl).ToList()),
                 ExistingImages = product.Images.Select(i => new ProductImageViewModel
                 {

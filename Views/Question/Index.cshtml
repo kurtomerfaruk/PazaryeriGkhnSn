@@ -211,7 +211,7 @@ ViewData["Title"] = "Sorular";
                 $("#productName").val(data.question.productName);
                 $("#status").val(data.question.status);
                 $("#text").val(data.question.text);
-                $("#answer").val(data.question.answer.text);
+                $("#answer").val(data.question.answer?.text);
                 $("#questionId").val(data.question.questionId);
 
                 if(data.question.status=="Cevap Bekleniyor"){

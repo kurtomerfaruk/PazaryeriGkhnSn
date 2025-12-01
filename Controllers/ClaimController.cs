@@ -104,6 +104,47 @@ namespace Pazaryeri.Controllers
             }
         }
 
+        [HttpPost]
+        public async Task<IActionResult> TrendyolApproveClaim(int claimId,string lineId)
+        {
+            try
+            {
+                var claim = await _claimRepository.GetByIdAsync(claimId);
+
+                if (claim == null)
+                {
+                    return Json(new { success = false, message = "Sipariş İadesi bulunamadı" });
+                }
+
+                var trendyolService = _platformServiceFactory.GetTrendyolService();
+                var approve = await trendyolService.ClaimApproveAsync(claim.TrendyolClaimId,lineId);
+
+                if (approve)
+                {
+                    return Json(new
+                    {
+                        success = true,
+                        message = $"Trendyol Sipariş iadeleri güncellendi."
+                    });
+                }
+
+                return Json(new
+                {
+                    success = false,
+                    message = $"Trendyol Sipariş iadeleri güncellenirken beklenmeyen hata olustu."
+                });
+
+            }
+            catch (Exception ex)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = $"Trendyol Sipariş iadeleri çekilirken hata: {ex.Message}"
+                });
+            }
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetClaimDetails(int id)
         {
@@ -135,30 +176,6 @@ namespace Pazaryeri.Controllers
                     {
                         items = JsonConvert.DeserializeObject<List<ClaimItems>>(c.Items)
                     })
-                    //order = new
-                    //{
-                    //    id = order.Id,
-                    //    orderNumber = order.OrderNumber,
-                    //    customerName = order.CustomerName,
-                    //    customerEmail = order.CustomerEmail,
-                    //    totalPrice = order.TotalPrice.ToString("C2"),
-                    //    status = order.Status,
-                    //    platform = order.Platform.ToString(),
-                    //    orderDate = order.OrderDate.ToString("dd.MM.yyyy HH:mm"),
-                    //},
-                    //items = order.TrendyolDetails.Select(oi => new
-                    //{
-                    //    productName = oi.ProductName,
-                    //    barcode = oi.Barcode,
-                    //    price = oi.Price.ToString("C2"),
-                    //    quantity = oi.Quantity,
-                    //    totalPrice = oi.TotalPrice.ToString("C2"),
-                    //}),
-                    //addresses = new
-                    //{
-                    //    invoice = order.BillAddress,
-                    //    shipment = order.CustomerAddress
-                    //}
                 };
 
                 return Json(result);

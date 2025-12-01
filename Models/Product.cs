@@ -12,7 +12,6 @@ namespace Pazaryeri.Models
         [Required]
         [StringLength(200)]
         public string Title { get; set; }
-        [StringLength(1000)]
         public string Description { get; set; }
         public decimal Price { get; set; }
         public int StockQuantity { get; set; }
