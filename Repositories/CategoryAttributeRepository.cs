@@ -43,7 +43,7 @@ namespace Pazaryeri.Repositories
             return await _context.CategoryAttributes.FirstOrDefaultAsync(o => o.Id == id);
         }
 
-        public async Task<(List<CategoryAttribute> CategoryAttributes, int TotalCount)> GetPagedCategoryAttributesAsync(int start, int length, string search, string sortColumn, string sortDirection)
+        public async Task<(List<CategoryAttribute> Items, int TotalCount)> GetPagedAsync(int start, int length, string search, string sortColumn, string sortDirection)
         {
             var query = _context.CategoryAttributes.AsQueryable();
 
@@ -159,5 +159,6 @@ namespace Pazaryeri.Repositories
             return await _context.CategoryAttributes.FirstOrDefaultAsync(c=>c.CategoryAttributeId == attributeId && c.CategoryId == categoryId);
         }
 
+      
     }
 }

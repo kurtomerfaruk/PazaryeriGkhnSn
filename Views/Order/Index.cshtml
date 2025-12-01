@@ -42,23 +42,6 @@
 
 @section Scripts {
 
-    <link href="~/app-assets/vendors/css/tables/datatable/datatables.min.css" rel="stylesheet" />
-    <link href="~/app-assets/vendors/css/tables/extensions/buttons.datatables.min.css" rel="stylesheet" />
-    <link href="~/app-assets/vendors/css/tables/datatable/buttons.bootstrap4.min.css" rel="stylesheet" />
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.4/toastr.min.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.4/toastr.min.css" rel="stylesheet">
-
-    <script src="~/app-assets/vendors/js/tables/datatable/datatables.min.js"></script>
-    <script src="~/app-assets/vendors/js/tables/datatable/datatables.buttons.min.js"></script>
-    <script src="~/app-assets/vendors/js/tables/datatable/buttons.bootstrap4.min.js"></script>
-    <script src="~/app-assets/vendors/js/tables/jszip.min.js"></script>
-    <script src="~/app-assets/vendors/js/tables/pdfmake.min.js"></script>
-    <script src="~/app-assets/vendors/js/tables/vfs_fonts.js"></script>
-    <script src="~/app-assets/vendors/js/tables/buttons.html5.min.js"></script>
-    <script src="~/app-assets/vendors/js/tables/buttons.print.min.js"></script>
-    <script src="~/app-assets/vendors/js/tables/buttons.colvis.min.js"></script>
-    
     <script>
         $(document).ready(function () {
             var table = $('#ordersTable').DataTable({
@@ -102,17 +85,6 @@
                              }
 
                              return html;
-                            
-                            // return `
-                            //     <div class="btn-group">
-                            //         <button class="btn btn-sm btn-info details-btn" data-id="${row.id}" data-toggle="tooltip" title="Detay">
-                            //             <i class="la la-eye"></i>
-                            //         </button>
-                            //         <a href="@Url.Action("UpdateTrendyolStatus")/${data}/picking" class="btn btn-sm btn-warning" data-toggle="tooltip" title="Onayla">
-                            //             <i class="la la-check"></i>
-                            //         </a>
-                            //     </div>
-                            // `;
                         },
                         orderable: false
                     },

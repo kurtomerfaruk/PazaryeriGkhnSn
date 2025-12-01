@@ -4883,15 +4883,3 @@ wwwroot\css\site.css
 wwwroot\favicon.ico
 wwwroot\i18n\tr.json
 wwwroot\js\site.js
-wwwroot\uploads\products\0d8627c3-86da-4fb5-8268-e4f6e6b3a571.jpg
-wwwroot\uploads\products\207eeeb3-e9b0-4aaf-af61-71ac2e9931d2.jpg
-wwwroot\uploads\products\3182545f-4f27-462a-9a65-0f15cd3d8c28.jpg
-wwwroot\uploads\products\3a6c6a81-cbc9-44c4-90d6-328d98220e20.jpg
-wwwroot\uploads\products\4e2a007a-5e8c-4e87-8a47-00b3dcf65fc1.jpg
-wwwroot\uploads\products\5a992cb8-e2e6-4d03-88af-c6a077caa988.jpg
-wwwroot\uploads\products\6e6d4454-4456-48e4-b539-6da752ae2396.jpg
-wwwroot\uploads\products\7a8d05fe-791c-40fa-a9eb-61c8d1af8c10.jpg
-wwwroot\uploads\products\880b88df-90ce-4e04-a82e-8ee47d5f7cd1.jpg
-wwwroot\uploads\products\d2c20d47-419c-4e4a-b6b9-a82178d5735b.jpg
-wwwroot\uploads\products\d7428cf6-131b-450e-913e-c7b7e83548f0.jpg
-wwwroot\uploads\products\dd3272b2-b830-4c8a-ad80-adfad88a283b.jpg

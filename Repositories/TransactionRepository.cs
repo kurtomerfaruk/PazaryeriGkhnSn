@@ -52,7 +52,7 @@ namespace Pazaryeri.Repositories
             return entity;
         }
 
-        public async Task<(List<Transaction> Transactions, int TotalCount)> GetPagedTransactionsAsync(int start, int length, string search, string sortColumn, string sortDirection)
+        public async Task<(List<Transaction> Items, int TotalCount)> GetPagedAsync(int start, int length, string search, string sortColumn, string sortDirection)
         {
             var query = _context.Transactions.AsQueryable();
 
@@ -98,5 +98,7 @@ namespace Pazaryeri.Repositories
         {
             return await _context.Transactions.FirstOrDefaultAsync(o => o.TransactionId == transactionId);
         }
+
+       
     }
 }

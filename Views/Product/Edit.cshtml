@@ -167,8 +167,10 @@
 </form>
 
 @section Scripts {
+
     <link rel="stylesheet" href="~/app-assets/vendors/css/editors/quill/quill.snow.css" />
     <script src="~/app-assets/vendors/js/editors/quill/quill.min.js"></script>
+
     <script>
         $(".select2").select2();
 
@@ -176,10 +178,9 @@
         let currentVariationAttributes = [];
 
         $(document).ready(function () {
-            // ÖNCE attributes'ları kontrol et ve render et
             var categoryAttributes = @Html.Raw(Json.Serialize(Model.CategoryAttributes ?? new List<Pazaryeri.ViewModels.CategoryAttributeViewModel>()));
             var attributeValues = @Html.Raw(Json.Serialize(Model.AttributeValues ?? new Dictionary<int, string>()));
-            // Eğer CategoryAttributes varsa, hemen render et
+
             if (categoryAttributes && categoryAttributes.length > 0) {
                 renderAttributes(categoryAttributes, attributeValues);
                 updateVariationAttributes(categoryAttributes);
@@ -188,7 +189,6 @@
             var initialVariants = @Html.Raw(Json.Serialize(Model?.Variants ?? new List<Pazaryeri.ViewModels.ProductVariantViewModel>()));
 
             if (initialVariants && initialVariants.length > 0) {
-                // Mevcut varyasyonlardan en yüksek tempId'yi bul
                 var maxTempId = Math.max(...initialVariants.map(v => v.tempId || 0));
                 variantCounter = maxTempId;
 
@@ -209,19 +209,16 @@
                 }, 100);
             }
 
-            // Quill editor
             var quill = new Quill("#editor", { theme: "snow" });
             $("form").on("submit", function() {
                 $("#Description").val(quill.root.innerHTML);
             });
 
-            // Resim preview
             $('#productImageInput').change(function() {
                 previewImages(this, '#imagePreview');
             });
         });
 
-        // Kategori değiştiğinde
         $('#CategoryId').change(function() {
             const categoryId = $(this).val();
 
@@ -255,7 +252,6 @@
                 });
         });
 
-        // Resim işlemleri
         function previewImages(input, previewContainer) {
             $(previewContainer).empty();
 
@@ -274,7 +270,6 @@
             }
         }
 
-        // Mevcut resim işlemleri
         $('.set-main-image').click(function() {
             var imageId = $(this).data('image-id');
             setAsMainImage(imageId);
@@ -378,7 +373,6 @@
                 var variantId = $(this).data('variant-id');
                 initializeVariantImagePreview(variantId);
 
-                // Geçici resimleri göster
                 showTempVariantImages(variantId, $(this));
             });
         }

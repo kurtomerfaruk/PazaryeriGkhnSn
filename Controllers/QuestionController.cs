@@ -53,7 +53,7 @@ namespace Pazaryeri.Controllers
                 int pageSize = length != null ? Convert.ToInt32(length) : 0;
                 int skip = start != null ? Convert.ToInt32(start) : 0;
 
-                var (questions, totalCount) = await _questionRepository.GetPagedQuestionsAsync(skip, pageSize, searchValue, sortColumn, sortDirection);
+                var (questions, totalCount) = await _questionRepository.GetPagedAsync(skip, pageSize, searchValue, sortColumn, sortDirection);
 
                 var returnObj = new
                 {

@@ -48,7 +48,7 @@ namespace Pazaryeri.Controllers
                 int pageSize = length != null ? Convert.ToInt32(length) : 0;
                 int skip = start != null ? Convert.ToInt32(start) : 0;
 
-                var (brands, totalCount) = await _brandRepository.GetPagedBrandsAsync(skip, pageSize, searchValue, sortColumn, sortDirection);
+                var (brands, totalCount) = await _brandRepository.GetPagedAsync(skip, pageSize, searchValue, sortColumn, sortDirection);
 
                 var returnObj = new
                 {

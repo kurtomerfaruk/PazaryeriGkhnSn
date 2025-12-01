@@ -43,7 +43,7 @@ namespace Pazaryeri.Repositories
             return await _context.Questions.FirstOrDefaultAsync(x => x.Id == id);
         }
 
-        public async Task<(List<Question> Questions, int TotalCount)> GetPagedQuestionsAsync(int start, int length, string search, string sortColumn, string sortDirection)
+        public async Task<(List<Question> Items, int TotalCount)> GetPagedAsync(int start, int length, string search, string sortColumn, string sortDirection)
         {
             var query = _context.Questions.AsQueryable();
 

@@ -55,7 +55,7 @@ namespace Pazaryeri.Repositories
             return await _context.Products.FirstOrDefaultAsync(o => o.Id == id);
         }
 
-        public async Task<(List<Product> Products, int TotalCount)> GetPagedAsync(int start, int length, string search, string sortColumn, string sortDirection)
+        public async Task<(List<Product> Items, int TotalCount)> GetPagedAsync(int start, int length, string search, string sortColumn, string sortDirection)
         {
             var query = _context.Products.Include(c=>c.Trendyols).AsQueryable();
 

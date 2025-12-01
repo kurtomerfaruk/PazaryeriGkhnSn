@@ -24,7 +24,7 @@ namespace Pazaryeri.Repositories
                 .FirstOrDefaultAsync(o => o.OrderNumber == orderNumber && o.Platform == platform);
         }
 
-        public async Task<(List<Models.Order> Orders, int TotalCount)> GetPagedOrdersAsync(int start, int length, string search, string sortColumn, string sortDirection)
+        public async Task<(List<Models.Order> Items, int TotalCount)> GetPagedAsync(int start, int length, string search, string sortColumn, string sortDirection)
         {
             var query = _context.Orders.AsQueryable();
 
@@ -116,11 +116,5 @@ namespace Pazaryeri.Repositories
              .FirstOrDefaultAsync(o => o.Id == id);
         }
 
-        public Task<TrendyolOrderDetail> GetTrendyolOrderDetailAsync(int orderId)
-        {
-            throw new NotImplementedException();
-        }
-
-       
     }
 }

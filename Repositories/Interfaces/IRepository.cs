@@ -10,5 +10,6 @@ namespace Pazaryeri.Repositories.Interfaces
         Task<T> GetByIdAsync(int id);
         Task<T> UpdateAsync(T entity);
         Task DeleteAsync(int id);
+        Task<(List<T> Items, int TotalCount)> GetPagedAsync(int start, int length, string search, string sortColumn, string sortDirection);
     }
 }

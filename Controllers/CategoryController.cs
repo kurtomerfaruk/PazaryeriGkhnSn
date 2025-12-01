@@ -55,7 +55,7 @@ namespace Pazaryeri.Controllers
                 int pageSize = length != null ? Convert.ToInt32(length) : 0;
                 int skip = start != null ? Convert.ToInt32(start) : 0;
 
-                var (categories, totalCount) = await _categoryRepository.GetPagedCategoryAsync(skip, pageSize, searchValue, sortColumn, sortDirection);
+                var (categories, totalCount) = await _categoryRepository.GetPagedAsync(skip, pageSize, searchValue, sortColumn, sortDirection);
 
                 var returnObj = new
                 {

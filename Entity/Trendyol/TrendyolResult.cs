@@ -7,8 +7,6 @@ namespace Pazaryeri.Entity.Trendyol
         public bool IsSuccess { get; set; }
         public TrendyolSuccessResponse Success { get; set; }
         public TrendyolErrorResponse Error { get; set; }
-
-        // Parse edilemeyen durumlar için
         public string RawResponse { get; set; }
     }
 

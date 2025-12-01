@@ -14,7 +14,6 @@ namespace Pazaryeri.Models
         public string Title { get; set; }
         [StringLength(1000)]
         public string Description { get; set; }
-        //public string ProductMainId { get; set; }
         public decimal Price { get; set; }
         public int StockQuantity { get; set; }
         public int BrandId { get; set; }

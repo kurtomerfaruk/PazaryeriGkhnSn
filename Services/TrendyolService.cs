@@ -2,6 +2,7 @@
 using Pazaryeri.Entity.Trendyol;
 using Pazaryeri.Entity.Trendyol.Categories;
 using Pazaryeri.Entity.Trendyol.CategoryAttribute;
+using Pazaryeri.Entity.Trendyol.Claims;
 using Pazaryeri.Entity.Trendyol.Orders;
 using Pazaryeri.Entity.Trendyol.Products;
 using Pazaryeri.Entity.Trendyol.Questions;
@@ -12,6 +13,7 @@ using Pazaryeri.Helper;
 using Pazaryeri.Models;
 using Pazaryeri.Repositories.Interfaces;
 using RestSharp;
+using System.Collections.Generic;
 using System.Net;
 using System.Text;
 
@@ -300,76 +302,7 @@ namespace Pazaryeri.Services
             return allProducts;
         }
 
-        //private async Product CreateProductFromTrendyol(ProductContent content)
-        //{
-        //    //    var color = trendyolProduct.attributes?
-        //    //        .FirstOrDefault(a => a.attributeName == "Renk")?.attributeValue;
 
-        //    //    var webColor = trendyolProduct.attributes?
-        //    //        .FirstOrDefault(a => a.attributeName == "Web Color")?.attributeValue;
-        //    //    var subtitle = trendyolProduct.title?.Length > 50
-        //    //? trendyolProduct.title.Substring(0, 50)
-        //    //: trendyolProduct.title;
-
-        //    //    List<TrendyolAttribute> attributes = trendyolProduct.attributes?
-        //    //                            .Select(item => new TrendyolAttribute
-        //    //                            {
-        //    //                                AttributeId = item.attributeId,
-        //    //                                AttributeName = item.attributeName,
-        //    //                                AttributeValue = item.attributeValue,
-        //    //                                AttributeValueId = item.attributeValueId,
-        //    //                            })
-        //    //                            .ToList() ?? new List<TrendyolAttribute>();
-
-        //    //    List<TrendyolImage> images = trendyolProduct.images?
-        //    //                           .Select(item => new TrendyolImage
-        //    //                           {
-        //    //                               Url = item.url
-        //    //                           })
-        //    //                           .ToList() ?? new List<TrendyolImage>();
-
-        //    var brand = await _brandRepository.GetOrCreateAsync(content.brandId, content.brand);
-        //    var category = await _categoryRepository.GetByIdAsync(content.pimCategoryId);
-        //    if (category == null)
-        //    {
-        //        throw new Exception("Trendyol kategorilerini güncelleyin");
-        //    }
-
-        //    List<ProductImage> images = new List<ProductImage>();
-
-        //    foreach (var img in content.images)
-        //    {
-        //        string localPath = await _imageRepository. ImportImageFromUrlAsync(img.url);
-
-        //        images.Add(new ProductImage
-        //        {
-        //            ImageUrl = localPath
-        //        });
-        //    }
-
-        //    return new Product
-        //    {
-        //        ProductCode = content.productCode.ToString(),
-        //        Title = content.title,
-        //        Description = content.description,
-        //        ProductMainId = content.productMainId,
-        //        Price = decimal.Parse(content.salePrice.ToString()),
-        //        StockQuantity = content.quantity,
-        //        BrandId = brand.Id,
-        //        CategoryId = category.Id,
-        //        TrendyolProductId = content.id,
-        //        Trendyols = new List<ProductTrendyol>
-        //        {
-        //            new ProductTrendyol
-        //            {
-        //                IsApproved=content.approved,
-        //                IsOnSale=content.onSale,
-        //            },
-        //         },
-        //        Images = images,
-        //        Variants =
-        //    };
-        //}
 
         public async Task<List<TrendyolBrand>> GetBrandsAsync(string value)
         {
@@ -541,10 +474,10 @@ namespace Pazaryeri.Services
 
         public async Task<List<Transaction>> GetTransactionsAsync(int page = 0, int size = 1000)
         {
-            return await GetAllransactionsRecursiveAsync(page, size);
+            return await GetAllTransactionsRecursiveAsync(page, size);
         }
 
-        private async Task<List<Transaction>> GetAllransactionsRecursiveAsync(int page = 0, int size = 1000)
+        private async Task<List<Transaction>> GetAllTransactionsRecursiveAsync(int page = 0, int size = 1000)
         {
             var allTransactions = new List<Transaction>();
             int currentPage = page;
@@ -571,10 +504,10 @@ namespace Pazaryeri.Services
 
                             if (trendyolResponse?.content != null && trendyolResponse.content.Any())
                             {
-                                var orders = trendyolResponse.content.Select(CreateTransactionFromTrendyol).ToList();
-                                allTransactions.AddRange(orders);
+                                var transactions = trendyolResponse.content.Select(CreateTransactionFromTrendyol).ToList();
+                                allTransactions.AddRange(transactions);
 
-                                if (orders.Count < size) break;
+                                if (transactions.Count < size) break;
                             }
                             else
                             {
@@ -633,36 +566,6 @@ namespace Pazaryeri.Services
             transaction.ShipmentPackageId = content.shipmentPackageId;
             transaction.Platform = Platform.Trendyol;
             return transaction;
-            //return new Transaction
-            //{
-            //    TransactionId = content.id,
-            //    TransactionDate = Util.LongToDatetime(content.transactionDate),
-            //    Barcode = content.barcode,
-            //    TransactionType = content.transactionType,
-            //    ReceiptId = content.receiptId,
-            //    Description = content.description,
-            //    Debt = decimal.Parse(content.debt.ToString()),
-            //    Credit = decimal.Parse(content.credit.ToString()),
-            //    PaymentPeriod = content.paymentPeriod,
-            //    CommissionRate = decimal.Parse(content.commissionRate.ToString()),
-            //    CommissionAmount = decimal.Parse(content.commissionAmount.ToString()),
-            //    CommissionInvoiceSerialNumber = content.commissionInvoiceSerialNumber,
-            //    SellerRevenue = decimal.Parse(content.sellerRevenue.ToString()),
-            //    OrderNumber = content.orderNumber,
-            //    OrderDate = Util.LongToDatetime(content.orderDate),
-            //    PaymentOrderId = content.paymentOrderId,
-            //    PaymentDate = Util.LongToDatetime(content.paymentDate),
-            //    SellerId = content.sellerId,
-            //    StoreId = content.storeId,
-            //    StoreName = content.storeName,
-            //    StoreAddress = content.storeAddress,
-            //    Country = content.country,
-            //    Currency = content.currency,
-            //    Affiliate = content.affiliate,
-            //    ShipmentPackageId = content.shipmentPackageId,
-            //    Platform = Platform.Trendyol
-
-            //};
         }
 
         public async Task<TrendyolResult> CreateProduct(Task<TrendyolProductItemsResponse> model)
@@ -808,6 +711,92 @@ namespace Pazaryeri.Services
                 _logger.LogError(ex, "Trendyol eklenirken hata olustu");
                 return new BatchResponse();
             }
+        }
+
+        public async Task<List<Claim>> GetClaimsAsync(int page = 0, int size = 100)
+        {
+            return await GetAllClaimsRecursiveAsync(page, size);
+        }
+
+        private async Task<List<Claim>> GetAllClaimsRecursiveAsync(int page = 0, int size = 100)
+        {
+            var allClaims = new List<Claim>();
+            int currentPage = page;
+
+
+            do
+            {
+                try
+                {
+                    var request = new RestRequest($"order/sellers/{_configuration["Trendyol:SupplierId"]}/claims");
+                    request.AddParameter("page", currentPage);
+                    request.AddParameter("size", size);
+                    request.AddParameter("startDate", Util.DateTimeToLong(DateTime.Now.AddDays(-14)));
+                    request.AddParameter("endDate", Util.DateTimeToLong(DateTime.Now));
+
+                    var response = await _client.ExecuteAsync(request);
+
+                    if (response.IsSuccessful && !string.IsNullOrEmpty(response.Content))
+                    {
+                        var trendyolResponse = JsonConvert.DeserializeObject<TrendyolClaims>(response.Content);
+
+                        if (trendyolResponse?.content != null && trendyolResponse.content.Any())
+                        {
+                            var claims = trendyolResponse.content.Select(CreateClaimFromTrendyol).ToList();
+                            allClaims.AddRange(claims);
+
+                            if (claims.Count < size) break;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        break;
+                    }
+
+                    currentPage++;
+                    await Task.Delay(100);
+
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Trendyol sayfa {Page} çekilirken hata", currentPage);
+                    break;
+                }
+
+            } while (currentPage < 1000);
+
+
+            return allClaims;
+        }
+
+        private Claim CreateClaimFromTrendyol(ClaimContent content)
+        {
+                        return new Claim
+            {
+                TrendyolClaimId = content.id,
+                OrderNumber = content.orderNumber,
+                OrderDate = Util.LongToDatetime(content.orderDate),
+                CustomerName = content.customerFirstName+ " "+ content.customerLastName,
+                ClaimDate = Util.LongToDatetime(content.claimDate),
+                CargoTrackingNumber = content.cargoTrackingNumber.ToString(),
+                CargoName = content.cargoProviderName,
+                OrderShipmentPackageId = content.orderShipmentPackageId.ToString()  ,
+                LastModifiedDate = Util.LongToDatetime(content.lastModifiedDate),
+                Trendyols = new List<TrendyolClaim> 
+                {
+                    new TrendyolClaim
+                    {
+                        TrendyolClaimId= content.id,
+                        Items = JsonConvert.SerializeObject(content.items)
+                        
+                    }
+                },
+                Platform = Platform.Trendyol
+            };
         }
     }
 }

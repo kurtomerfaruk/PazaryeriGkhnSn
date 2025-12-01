@@ -13,7 +13,6 @@
             _logger = logger;
         }
 
-        // Ortak metodlar buraya (opsiyonel)
         protected virtual string GetOrderStatus(string status)
         {
             return status ?? "Bekliyor";

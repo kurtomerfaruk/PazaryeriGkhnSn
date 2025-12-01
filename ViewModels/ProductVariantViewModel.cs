@@ -6,14 +6,6 @@ namespace Pazaryeri.ViewModels
     {
         public int Id { get; set; }
 
-        //[Required(ErrorMessage = "Varyasyon tipi zorunludur")]
-        //[Display(Name = "Varyasyon Tipi")]
-        //public string AttributeType { get; set; }
-
-        //[Required(ErrorMessage = "Varyasyon değeri zorunludur")]
-        //[Display(Name = "Varyasyon Değeri")]
-        //public string AttributeValue { get; set; }
-
         public int TempId { get; set; }
 
         [Display(Name = "SKU")]

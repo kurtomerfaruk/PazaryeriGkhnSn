@@ -141,6 +141,49 @@ namespace Pazaryeri.Migrations
                     b.ToTable("CategoryAttributeValue");
                 });
 
+            modelBuilder.Entity("Pazaryeri.Models.Claim", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CargoName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CargoTrackingNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("ClaimDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CustomerName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("LastModifiedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("OrderDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("OrderNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("OrderShipmentPackageId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Platform")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TrendyolClaimId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Claims");
+                });
+
             modelBuilder.Entity("Pazaryeri.Models.Order", b =>
                 {
                     b.Property<int>("Id")
@@ -609,6 +652,30 @@ namespace Pazaryeri.Migrations
                     b.ToTable("Transactions");
                 });
 
+            modelBuilder.Entity("Pazaryeri.Models.TrendyolClaim", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ClaimId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Items")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TrendyolClaimId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClaimId");
+
+                    b.ToTable("TrendyolClaim");
+                });
+
             modelBuilder.Entity("Pazaryeri.Models.TrendyolOrderDetail", b =>
                 {
                     b.Property<int>("Id")
@@ -791,6 +858,17 @@ namespace Pazaryeri.Migrations
                     b.Navigation("ProductVariant");
                 });
 
+            modelBuilder.Entity("Pazaryeri.Models.TrendyolClaim", b =>
+                {
+                    b.HasOne("Pazaryeri.Models.Claim", "Claim")
+                        .WithMany("Trendyols")
+                        .HasForeignKey("ClaimId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Claim");
+                });
+
             modelBuilder.Entity("Pazaryeri.Models.TrendyolOrderDetail", b =>
                 {
                     b.HasOne("Pazaryeri.Models.Order", "Order")
@@ -819,6 +897,11 @@ namespace Pazaryeri.Migrations
             modelBuilder.Entity("Pazaryeri.Models.CategoryAttribute", b =>
                 {
                     b.Navigation("Values");
+                });
+
+            modelBuilder.Entity("Pazaryeri.Models.Claim", b =>
+                {
+                    b.Navigation("Trendyols");
                 });
 
             modelBuilder.Entity("Pazaryeri.Models.Order", b =>

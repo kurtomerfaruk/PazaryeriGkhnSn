@@ -17,7 +17,6 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
-//builder.Services.AddScoped<ITrendyolProductDetailRepository, TrendyolProductDetailRepository>();
 builder.Services.AddScoped<ICategoryAttributeValueRepository, CategoryAttributeValueRepository>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IBrandRepository, BrandRepository>();
@@ -25,6 +24,7 @@ builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<ICategoryAttributeRepository, CategoryAttributeRepository>();
 builder.Services.AddScoped<IQuestionRepository, QuestionRepository>();
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
+builder.Services.AddScoped<IClaimRepository, ClaimRepository>();
 builder.Services.AddScoped<IImageRepository, ImageRepository>();
 builder.Services.AddScoped<IPlatformServiceFactory, PlatformServiceFactory>();
 

@@ -50,7 +50,7 @@ namespace Pazaryeri.Controllers
                 int pageSize = length != null ? Convert.ToInt32(length) : 0;
                 int skip = start != null ? Convert.ToInt32(start) : 0;
 
-                var (transactions, totalCount) = await _transactionRepository.GetPagedTransactionsAsync(skip, pageSize, searchValue, sortColumn, sortDirection);
+                var (transactions, totalCount) = await _transactionRepository.GetPagedAsync(skip, pageSize, searchValue, sortColumn, sortDirection);
 
                 var returnObj = new
                 {

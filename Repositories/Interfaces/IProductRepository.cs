@@ -6,7 +6,6 @@ namespace Pazaryeri.Repositories.Interfaces
 {
     public interface IProductRepository:IRepository<Product>
     {
-        Task<(List<Product> Products, int TotalCount)> GetPagedAsync(int start, int length, string search, string sortColumn, string sortDirection);
         Task<Product> ProductsExistsAsync(string title, Platform platform);
         Task<Product> GetWithDetailsAsync(int id);
         Task<Product> GetByProductMainIdAsync(string productMainId);

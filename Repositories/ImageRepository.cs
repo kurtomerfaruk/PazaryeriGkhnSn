@@ -20,7 +20,6 @@ namespace Pazaryeri.Repositories
                 throw new ArgumentException("Dosya boş olamaz.");
             }
 
-            // Dosya uzantısını kontrol et
             var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
             var fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
 
@@ -29,30 +28,25 @@ namespace Pazaryeri.Repositories
                 throw new InvalidOperationException("Sadece JPG, JPEG, PNG ve GIF dosyaları yüklenebilir.");
             }
 
-            // Dosya boyutunu kontrol et (max 5MB)
             if (file.Length > 5 * 1024 * 1024)
             {
                 throw new InvalidOperationException("Dosya boyutu 5MB'tan büyük olamaz.");
             }
 
-            // Uploads klasörünü oluştur
             var uploadsFolder = Path.Combine(_environment.WebRootPath, "uploads", "products");
             if (!Directory.Exists(uploadsFolder))
             {
                 Directory.CreateDirectory(uploadsFolder);
             }
 
-            // Benzersiz dosya adı oluştur
             var fileName = $"{Guid.NewGuid()}{fileExtension}";
             var filePath = Path.Combine(uploadsFolder, fileName);
 
-            // Dosyayı kaydet
             using (var stream = new FileStream(filePath, FileMode.Create))
             {
                 await file.CopyToAsync(stream);
             }
 
-            // URL'yi döndür
             return $"/uploads/products/{fileName}";
         }
 

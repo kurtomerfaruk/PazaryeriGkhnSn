@@ -129,7 +129,6 @@
 @section Scripts {
     <link rel="stylesheet" href="~/app-assets/vendors/css/editors/quill/quill.snow.css" />
     <script src="~/app-assets/vendors/js/editors/quill/quill.min.js"></script>
-    <script src="~/app-assets/vendors/js/forms/repeater/jquery.repeater.min.js"></script>
 
     <script>
         $(".select2").select2();
@@ -336,7 +335,6 @@
                 var variantId = $(this).data('variant-id');
                 initializeVariantImagePreview(variantId);
 
-                // Geçici resimleri göster
                 showTempVariantImages(variantId, $(this));
             });
         }

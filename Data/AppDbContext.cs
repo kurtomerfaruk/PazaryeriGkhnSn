@@ -26,6 +26,7 @@ namespace Pazaryeri.Data
         public DbSet<TrendyolRejectReasonDetail> TrendyolRejectReasonDetails => Set<TrendyolRejectReasonDetail>();
         public DbSet<Question> Questions => Set<Question>();
         public DbSet<Transaction> Transactions => Set<Transaction>();
+        public DbSet<Claim> Claims => Set<Claim>();
      
     }
 }

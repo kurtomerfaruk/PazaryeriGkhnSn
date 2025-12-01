@@ -44,7 +44,7 @@ namespace Pazaryeri.Repositories
                   .FirstOrDefaultAsync(o => o.Id == id);
         }
 
-        public async Task<(List<Category> Categories, int TotalCount)> GetPagedCategoryAsync(int start, int length, string search, string sortColumn, string sortDirection)
+        public async Task<(List<Category> Items, int TotalCount)> GetPagedAsync(int start, int length, string search, string sortColumn, string sortDirection)
         {
             var query = _context.Categories.AsQueryable();
 
@@ -152,6 +152,8 @@ namespace Pazaryeri.Repositories
         {
             return await _context.Categories.FirstAsync(c=>c.CategoryId == categoryId);
         }
+
+      
     }
 
 

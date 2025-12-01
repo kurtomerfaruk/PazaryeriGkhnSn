@@ -53,7 +53,7 @@ namespace Pazaryeri.Repositories
             return entity;
         }
 
-        public async Task<(List<Brand> Brands, int TotalCount)> GetPagedBrandsAsync(int start, int length, string search, string sortColumn, string sortDirection)
+        public async Task<(List<Brand> Items, int TotalCount)> GetPagedAsync(int start, int length, string search, string sortColumn, string sortDirection)
         {
             var query = _context.Brands.AsQueryable();
 
