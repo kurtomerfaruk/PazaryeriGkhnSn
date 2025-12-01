@@ -37,5 +37,7 @@
         public bool hasHtmlContent { get; set; }
         public string productUrl { get; set; }
         public object deliveryOption { get; set; }
+
+        public string batchRequestId { get;set; }
     }
 }

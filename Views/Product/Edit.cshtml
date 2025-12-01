@@ -116,7 +116,7 @@
                 <div class="card-body" id="attributeContainer">
                     @if (Model.CategoryAttributes != null && Model.CategoryAttributes.Any())
                     {
-                        // Attributes Create'deki gibi render edilecek
+                      
                     }
                     else
                     {
@@ -405,6 +405,7 @@
             let html = '<div class="row">';
 
             attributes.forEach(attr => {
+                console.log(attr.id);
                 if (!attr.varianter) {
                     html += `<div class="col-md-6"><div class="form-group">
                         <label>${attr.name} ${attr.required ? '<span style="color:red">*</span>' : ''}</label>`;

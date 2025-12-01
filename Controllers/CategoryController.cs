@@ -179,9 +179,6 @@ namespace Pazaryeri.Controllers
                     categoryAttributes.Add(categoryAttribute);
                 }
 
-
-                //var categoryAttributes = ConvertToCategoryAttributes(categoryId, attributes);
-
                 await _categoryAttributeRepository.AddOrUpdateRangeAsync(categoryAttributes);
                 await _categoryAttributeRepository.SaveChangesAsync();
 

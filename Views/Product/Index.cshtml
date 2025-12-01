@@ -109,7 +109,13 @@
                                     <button class="btn btn-sm btn-info trendyol-update-btn" data-id="${row.id}" data-toggle="tooltip" title="Trendyol'a Gönder">
                                         <i class="la la-send"></i>
                                     </button>
+
                                     `;
+                            if (row.batchRequestId) {
+                                html += `<button class="btn btn-sm btn-primary trendyol-batch-btn" data-id="${row.id}" data-toggle="tooltip" title="Trendyol İşlem Kontrolü">
+                                            <i class="la la-info"></i>
+                                        </button>`
+                            }
 
                              return html;
                         },
@@ -161,7 +167,6 @@
 
             $('#productsTable').on('click', '.trendyol-update-btn', function (e) {
                 e.preventDefault();
-                console.log("deneme");
                 var $btn = $('.trendyol-update-btn');
                 var id = $(this).data('id');
 
@@ -188,6 +193,35 @@
                         $btn.prop('disabled', false).html('<i class="fas fa-sync"></i> Trendyola Gönder');
                     });
             });
+
+            $('#productsTable').on('click', '.trendyol-batch-btn', function (e) {
+                 e.preventDefault();
+                var $btn = $('.trendyol-batch-btn');
+                 var id = $(this).data('id');
+
+                 var data = { id: id};
+
+                 $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Gönderiliyor...');
+
+                 var url ='@Url.Action("BatchControl")';
+
+                 $.post(url, data)
+                     .done(function (response) {
+                         console.log(JSON.stringify(response));
+                         if (response.success) {
+                             table.ajax.reload();
+                             toastr.success(response.message);
+                         } else {
+                             toastr.error(response.message);
+                         }
+                     })
+                     .fail(function () {
+                         toastr.error('Ürün gönderilirken hata oluştu.');
+                     })
+                     .always(function () {
+                         $btn.prop('disabled', false).html('<i class="la la-info"></i>');
+                     });
+             });
 
              $('#productsTable').on('click', '.details-btn', function () {
                 var productId = $(this).data('id');

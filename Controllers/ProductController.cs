@@ -73,7 +73,7 @@ namespace Pazaryeri.Controllers
                 int pageSize = length != null ? Convert.ToInt32(length) : 0;
                 int skip = start != null ? Convert.ToInt32(start) : 0;
 
-                var (products, totalCount) = await _productRepository.GetPagedProductsAsync(skip, pageSize, searchValue, sortColumn, sortDirection);
+                var (products, totalCount) = await _productRepository.GetPagedAsync(skip, pageSize, searchValue, sortColumn, sortDirection);
 
                 var returnObj = new
                 {
@@ -84,6 +84,11 @@ namespace Pazaryeri.Controllers
                     {
                         id = o.Id,
                         title = o.Title,
+                        batchRequestId = string.Join(",",
+                                                o.Trendyols
+                                                 .Where(c => !string.IsNullOrWhiteSpace(c.BatchRequestId))
+                                                 .Select(c => c.BatchRequestId)
+                                            ),
                         actions = o.Id
                     })
                 };
@@ -140,29 +145,39 @@ namespace Pazaryeri.Controllers
             var model = MapToTrendyolProductResponse(product);
 
             var trendyolService = _platformServiceFactory.GetTrendyolService();
-            TrendyolResult createProductResponse = await trendyolService.CreateProduct(model);
-
-
-            if (createProductResponse.IsSuccess)
+            TrendyolResult result;
+            if (product.Trendyols.Any())
             {
-                var batchResponse = await trendyolService.CreateProductBatchResult(createProductResponse.Success.batchRequestId);
-                string successMessage = "Ürün gönderme durumu : "+batchResponse.status;
+                result = await trendyolService.UpdateProduct(model);
+            }
+            else
+            {
+                result = await trendyolService.CreateProduct(model);
+            }
+
+
+            if (result.IsSuccess)
+            {
+                var batchResponse = await trendyolService.CreateProductBatchResult(result.Success.batchRequestId);
+                string successMessage = "Ürün gönderme durumu : " + batchResponse.status;
                 if (batchResponse.items.Count > 0)
                 {
                     foreach (var item in batchResponse.items)
                     {
-                        successMessage += "Ürün Sonuç Durumu :" + item.status+"\n";
+                        successMessage += "Ürün Sonuç Durumu :" + item.status + "\n";
                         if (item.failureReasons.Count > 0)
                         {
                             int count = 0;
-                           
+
                             foreach (var reason in item.failureReasons)
                             {
                                 count++;
-                                successMessage += "Hata" + count + ":"+reason;
+                                successMessage += "Hata" + count + ":" + reason;
                             }
                         }
                     }
+                    product.Trendyols.First().BatchRequestId = result.Success.batchRequestId;
+                   await _productRepository.UpdateAsync(product);
                 }
 
                 return Json(new
@@ -174,7 +189,7 @@ namespace Pazaryeri.Controllers
 
             string resultMessage = "";
 
-            foreach (var item in createProductResponse.Error.errors)
+            foreach (var item in result.Error.errors)
             {
                 resultMessage += item.message;
             }
@@ -184,6 +199,51 @@ namespace Pazaryeri.Controllers
                 success = false,
                 message = resultMessage
             });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> BatchControl(int id)
+        {
+
+            var product = await _productRepository.GetProductByIdAsync(id);
+            if (product == null)
+            {
+                return NotFound();
+            }
+
+            var trendyolService = _platformServiceFactory.GetTrendyolService();
+            string batchId = string.Join(",",
+                                                product.Trendyols
+                                                 .Where(c => !string.IsNullOrWhiteSpace(c.BatchRequestId))
+                                                 .Select(c => c.BatchRequestId)
+                                            );
+            var batchResponse = await trendyolService.CreateProductBatchResult(batchId);
+            string successMessage = "";
+            if (batchResponse.items.Count > 0)
+            {
+                foreach (var item in batchResponse.items)
+                {
+                    successMessage += "Ürün Sonuç Durumu :" + item.status + "\n";
+                    if (item.failureReasons.Count > 0)
+                    {
+                        int count = 0;
+
+                        foreach (var reason in item.failureReasons)
+                        {
+                            count++;
+                            successMessage += "Hata" + count + ":" + reason;
+                        }
+                    }
+                }
+            }
+
+            return Json(new
+            {
+                success = !string.IsNullOrEmpty(successMessage),
+                message = string.IsNullOrEmpty(successMessage) ? "Bilgi Okunamadı":successMessage
+            });
+
+           
         }
 
         private async Task<TrendyolProductItemsResponse> MapToTrendyolProductResponse(Product product)
@@ -210,11 +270,11 @@ namespace Pazaryeri.Controllers
                     cargoCompanyId = product.TrendyolCargoId,
                     images = item.VariantImages.Select(c => new Image
                     {
-                        url = baseUrl+c.ImageUrl
+                        url = baseUrl + c.ImageUrl
                     }).ToList(),
 
                 };
-                
+
                 foreach (var variantAttribute in item.VariantAttributes)
                 {
                     CategoryAttributeValue value = await _categoryAttributeValueRepository.GetByIdAsync(variantAttribute.AttributeValueId);
@@ -228,8 +288,8 @@ namespace Pazaryeri.Controllers
 
                 foreach (var attr in product.Attributes)
                 {
-                    if(string.IsNullOrEmpty(attr.Value)) continue;
-                    if(int.TryParse(attr.Value,out int intValue))
+                    if (string.IsNullOrEmpty(attr.Value)) continue;
+                    if (int.TryParse(attr.Value, out int intValue))
                     {
                         CategoryAttributeValue value = await _categoryAttributeValueRepository.GetByIdAsync(intValue);
                         Entity.Trendyol.Products.Attribute attribute = new Entity.Trendyol.Products.Attribute
@@ -241,7 +301,7 @@ namespace Pazaryeri.Controllers
                     }
                     else
                     {
-                        CategoryAttribute categoryAttribute=await _categoryAttributeRepository.GetByIdAsync(attr.AttributeId);
+                        CategoryAttribute categoryAttribute = await _categoryAttributeRepository.GetByIdAsync(attr.AttributeId);
                         Entity.Trendyol.Products.Attribute attribute = new Entity.Trendyol.Products.Attribute
                         {
                             attributeId = categoryAttribute.CategoryAttributeId,

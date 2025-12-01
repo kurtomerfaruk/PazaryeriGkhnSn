@@ -729,6 +729,70 @@ namespace Pazaryeri.Services
             }
         }
 
+        public async Task<TrendyolResult> UpdateProduct(Task<TrendyolProductItemsResponse> model)
+        {
+            var request = new RestRequest($"product/sellers/{_configuration["Trendyol:SupplierId"]}/products", Method.Put);
+
+            var json = JsonConvert.SerializeObject(model.Result, new JsonSerializerSettings
+            {
+                NullValueHandling = NullValueHandling.Ignore
+            });
+
+            request.AddJsonBody(json);
+
+            var response = await _client.ExecuteAsync(request);
+            if (!response.IsSuccessful)
+            {
+                try
+                {
+                    var error = JsonConvert.DeserializeObject<TrendyolErrorResponse>(response.Content);
+                    return new TrendyolResult
+                    {
+                        IsSuccess = false,
+                        Error = error
+                    };
+                }
+                catch
+                {
+                    return new TrendyolResult
+                    {
+                        IsSuccess = false,
+                        RawResponse = response.Content
+                    };
+                }
+            }
+
+            try
+            {
+                var success = JsonConvert.DeserializeObject<TrendyolSuccessResponse>(response.Content);
+                return new TrendyolResult
+                {
+                    IsSuccess = true,
+                    Success = success
+                };
+            }
+            catch
+            {
+                try
+                {
+                    var error = JsonConvert.DeserializeObject<TrendyolErrorResponse>(response.Content);
+                    return new TrendyolResult
+                    {
+                        IsSuccess = false,
+                        Error = error
+                    };
+                }
+                catch
+                {
+                    return new TrendyolResult
+                    {
+                        IsSuccess = false,
+                        RawResponse = response.Content
+                    };
+                }
+            }
+        }
+
         public async Task<BatchResponse> CreateProductBatchResult(string batchRequestId)
         {
             try

@@ -7,6 +7,6 @@ namespace Pazaryeri.Repositories.Interfaces
         Task AddOrUpdateRangeAsync(List<Models.CategoryAttribute> categoryAttributes);
         Task SaveChangesAsync();
         //Task<Models.CategoryAttribute> GetByCompositeKeyAsync(long categoryId);
-        Task<Models.CategoryAttribute> GetByAttributeId(int attributeId);
+        Task<Models.CategoryAttribute> GetByAttributeIdByCategoryId(int attributeId,int categoryId);
     }
 }

@@ -55,9 +55,9 @@ namespace Pazaryeri.Repositories
             return await _context.Products.FirstOrDefaultAsync(o => o.Id == id);
         }
 
-        public async Task<(List<Product> Products, int TotalCount)> GetPagedProductsAsync(int start, int length, string search, string sortColumn, string sortDirection)
+        public async Task<(List<Product> Products, int TotalCount)> GetPagedAsync(int start, int length, string search, string sortColumn, string sortDirection)
         {
-            var query = _context.Products.AsQueryable();
+            var query = _context.Products.Include(c=>c.Trendyols).AsQueryable();
 
             if (!string.IsNullOrEmpty(search))
             {
@@ -170,6 +170,15 @@ namespace Pazaryeri.Repositories
                         Active = true,
                     };
 
+                    newProduct.Trendyols.Add(new ProductTrendyol
+                    {
+                        IsApproved = mainItem.approved,
+                        IsOnSale = mainItem.onSale,
+                        BatchRequestId=mainItem.batchRequestId,
+                        TrendyolProductId=mainItem.id,
+                        ProductUrl=mainItem.productUrl,
+                    });
+
                     int tempId = 1;
 
                     foreach (var item in group)
@@ -204,7 +213,7 @@ namespace Pazaryeri.Repositories
 
                         foreach (var attr in item.attributes)
                         {
-                            var attribute = await _categoryAttributeRepository.GetByAttributeId(attr.attributeId);
+                            var attribute = await _categoryAttributeRepository.GetByAttributeIdByCategoryId(attr.attributeId,category.Id);
                             if (attribute == null)
                             {
                                 throw new Exception("Kategori Özelliklerini güncelleyin");
@@ -212,7 +221,7 @@ namespace Pazaryeri.Repositories
 
                             if (attribute.Varianter)
                             {
-                                var attributeValue = await _categoryAttributeValueRepository.GetByAttributeValueId(attr.attributeValueId);
+                                var attributeValue = await _categoryAttributeValueRepository.GetByAttributeValueIdByCategoryId(attr.attributeValueId, attribute.Id);
                                 variant.VariantAttributes.Add(new ProductVariantAttribute
                                 {
                                     AttributeId = attribute.Id,
@@ -222,14 +231,7 @@ namespace Pazaryeri.Repositories
                             else
                             {
                                 
-                                var attributeValue = await _categoryAttributeValueRepository.GetByAttributeValueId(attr.attributeValueId);
-
-                                //ProductAttribute productAttribute = new ProductAttribute();
-                                //productAttribute.AttributeId = attribute.CategoryAttributeId;
-                                //if (attributeValue == null)
-                                //{
-                                //    productAttribute.Value = attr.customAttributeValue;
-                                //}
+                                var attributeValue = await _categoryAttributeValueRepository.GetByAttributeValueIdByCategoryId(attr.attributeValueId,attribute.Id);
 
                                 var existingAttr = newProduct.Attributes.FirstOrDefault(a => a.AttributeId == attribute.Id);
 
@@ -298,7 +300,7 @@ namespace Pazaryeri.Repositories
 
                         foreach (var attr in item.attributes)
                         {
-                            var attribute = await _categoryAttributeRepository.GetByAttributeId(attr.attributeId);
+                            var attribute = await _categoryAttributeRepository.GetByAttributeIdByCategoryId(attr.attributeId,existingProduct.CategoryId);
                             if (attribute == null)
                             {
                                 throw new Exception("Kategori Özelliklerini güncelleyin");
@@ -306,7 +308,7 @@ namespace Pazaryeri.Repositories
 
                             if (attribute.Varianter)
                             {
-                                var attributeValue = await _categoryAttributeValueRepository.GetByAttributeValueId(attr.attributeValueId);
+                                var attributeValue = await _categoryAttributeValueRepository.GetByAttributeValueIdByCategoryId(attr.attributeValueId,attribute.Id);
                                 variant.VariantAttributes.Add(new ProductVariantAttribute
                                 {
                                     AttributeId = attribute.Id,
@@ -315,14 +317,7 @@ namespace Pazaryeri.Repositories
                             }
                             else
                             {
-                                var attributeValue = await _categoryAttributeValueRepository.GetByAttributeValueId(attr.attributeValueId);
-
-                                //ProductAttribute productAttribute = new ProductAttribute();
-                                //productAttribute.AttributeId = attribute.CategoryAttributeId;
-                                //if (attributeValue == null)
-                                //{
-                                //    productAttribute.Value = attr.attributeValue;
-                                //}
+                                var attributeValue = await _categoryAttributeValueRepository.GetByAttributeValueIdByCategoryId(attr.attributeValueId, attribute.Id);
 
                                 var existingAttr = existingProduct.Attributes.FirstOrDefault(a => a.AttributeId == attribute.Id);
 
@@ -356,188 +351,9 @@ namespace Pazaryeri.Repositories
 
             await _context.SaveChangesAsync();
 
-            //foreach (var group in groupedProducts)
-            //{
-            //    string productMainId = group.Key;
-
-            //    var existingProduct = await GetByProductMainIdAsync(productMainId);
-
-            //    ProductContent mainItem = group.First();
-
-            //    if (existingProduct == null)
-            //    {
-            //        var brand = await _brandRepository.GetOrCreateAsync(mainItem.brandId, mainItem.brand);
-            //        var category = await _categoryRepository.GetByIdAsync(mainItem.pimCategoryId);
-            //        if (category == null)
-            //        {
-            //            throw new Exception("Trendyol kategorilerini güncelleyin");
-            //        }
-
-            //        var newProduct = new Product
-            //        {
-            //            Title = mainItem.title,
-            //            ProductCode = mainItem.productMainId,
-            //            TrendyolProductMainId = mainItem.productMainId,
-            //            BrandId = brand.Id,
-            //            CategoryId = category.Id,
-            //            Price = decimal.Parse(mainItem.salePrice.ToString()),
-            //            StockQuantity = mainItem.quantity
-            //        };
-
-            //        int tempId = 1;
-
-            //        foreach (var item in group)
-            //        {
-            //            newProduct.Variants.Add(new ProductVariant
-            //            {
-            //                Barcode = item.barcode,
-            //                Sku = item.stockCode,
-            //                StockQuantity = item.quantity,
-            //                SalePrice = decimal.Parse(item.salePrice.ToString()),
-            //                ListPrice = decimal.Parse(item.listPrice.ToString()),
-            //                TempId = tempId,
-            //                CreatedDate = DateTime.Now,
-            //                Active = true
-            //            });
-            //            tempId++;
-            //        }
-
-            //        foreach (var image in mainItem.images)
-            //        {
-            //            var savedFilePath = await _imageRepository.ImportImageFromUrlAsync(image.url);
-
-            //            newProduct.Images.Add(new ProductImage
-            //            {
-            //                ImageUrl = savedFilePath
-            //            });
-            //        }
-
-            //        await CreateAsync(newProduct);
-            //    }
-            //    else
-            //    {
-            //        existingProduct.Title = mainItem.title;
-            //        existingProduct.Price = decimal.Parse(mainItem.salePrice.ToString());
-            //        existingProduct.StockQuantity = mainItem.quantity;
-            //        existingProduct.UpdatedDate = DateTime.Now;
-
-            //        existingProduct.Variants.Clear();
-            //        foreach (var item in group)
-            //        {
-            //            existingProduct.Variants.Add(new ProductVariant
-            //            {
-            //                Barcode = item.barcode,
-            //                Sku = item.stockCode,
-            //                StockQuantity = item.quantity,
-            //                SalePrice = decimal.Parse(item.salePrice.ToString()),
-            //                ListPrice = decimal.Parse(item.listPrice.ToString())
-            //            });
-            //        }
-
-            //        existingProduct.Images.Clear();
-            //        foreach (var image in mainItem.images)
-            //        {
-            //            var savedFilePath = await _imageRepository.ImportImageFromUrlAsync(image.url);
-
-            //            existingProduct.Images.Add(new ProductImage
-            //            {
-            //                ImageUrl = savedFilePath
-            //            });
-            //        }
-
-            //        await UpdateAsync(existingProduct);
-            //    }
-            //}
-
-            //await _context.SaveChangesAsync();
-
-            //foreach (var group in Values)
-            //{
-            //    var existingProduct = await _context.Products.FirstOrDefaultAsync(p => p.TrendyolProductMainId == group.Key);
-            //    if (existingProduct == null)
-            //    {
-            //        existingProduct = new Product
-            //        {
-            //            Title = group.Key
-            //        };
-            //        await CreateAsync(existingProduct);
-            //    }
-
-            //    var firstGroup = group.First();
-
-            //    var brand = await _brandRepository.GetOrCreateAsync(firstGroup.brandId, firstGroup.brand);
-            //    var category = await _categoryRepository.GetByIdAsync(firstGroup.pimCategoryId);
-            //    if (category == null)
-            //    {
-            //        throw new Exception("Trendyol kategorilerini güncelleyin");
-            //    }
-
-            //    existingProduct.ProductCode = firstGroup.productCode.ToString();
-            //    existingProduct.Title = firstGroup.title;
-            //    existingProduct.Description = firstGroup.description;
-            //    existingProduct.Price = decimal.Parse(firstGroup.salePrice.ToString());
-            //    existingProduct.StockQuantity = firstGroup.quantity;
-            //    existingProduct.BrandId = brand.Id;
-            //    existingProduct.CategoryId = category.Id;
-            //    existingProduct.CreatedDate = DateTime.UtcNow;
-            //    existingProduct.Active = true;
-
-            //    List<ProductVariant> variants = new List<ProductVariant>();
-
-            //    foreach (var item in group)
-            //    {
-            //        var existingDetail = existingProduct.Trendyols.FirstOrDefault(d => d.TrendyolProductId == item.id);
-
-
-            //        List<ProductImage> images = new List<ProductImage>();
-
-            //        foreach (var img in item.images)
-            //        {
-            //            string localPath = await _imageRepository.ImportImageFromUrlAsync(img.url);
-
-            //            images.Add(new ProductImage
-            //            {
-            //                ImageUrl = localPath
-            //            });
-            //        }
-
-            //        existingProduct.Images = images;
-
-
-
-
-
-            //        existingProduct.Variants = variants;
-
-            //        //if (existingDetail == null)
-            //        //{
-            //        //    existingDetail = ProductContentToProductTrendyol(item);
-            //        //    existingProduct.Trendyols.Add(existingDetail);
-            //        //}
-            //        //else
-            //        //{
-            //        //    existingDetail.TrendyolProductId = item.id;
-            //        //    existingDetail.IsApproved = item.approved;
-            //        //    existingDetail.IsOnSale = item.onSale;
-            //        //    existingDetail.ProductUrl = item.productUrl;
-
-            //        //}
-
-            //    }
-            //}
-            //await _context.SaveChangesAsync();
+            
         }
 
-        private ProductTrendyol ProductContentToProductTrendyol(ProductContent item)
-        {
-            return new ProductTrendyol
-            {
-                TrendyolProductId = item.id,
-                IsApproved = item.approved,
-                IsOnSale = item.onSale,
-                ProductUrl = item.productUrl,
-            };
-        }
 
         public async Task<Product> CreateProductAsync(ProductViewModel model)
         {
@@ -545,7 +361,6 @@ namespace Pazaryeri.Repositories
 
             try
             {
-                // 1. ANA ÜRÜNÜ OLUŞTUR
                 var product = new Product
                 {
                     Title = model.Title,
@@ -562,9 +377,8 @@ namespace Pazaryeri.Repositories
                 };
 
                 _context.Products.Add(product);
-                await _context.SaveChangesAsync(); // ProductId'yi almak için
+                await _context.SaveChangesAsync();
 
-                // 2. ÜRÜN ATTRIBUTE'LARINI KAYDET
                 if (model.AttributeValues != null && model.AttributeValues.Any())
                 {
                     foreach (var attribute in model.AttributeValues)
@@ -581,7 +395,6 @@ namespace Pazaryeri.Repositories
                     await _context.SaveChangesAsync();
                 }
 
-                // 3. VARYASYONLARI KAYDET
                 if (model.Variants != null && model.Variants.Any())
                 {
                     foreach (var variantModel in model.Variants)
@@ -599,9 +412,8 @@ namespace Pazaryeri.Repositories
                         };
 
                         _context.ProductVariants.Add(variant);
-                        await _context.SaveChangesAsync(); // VariantId'yi almak için
+                        await _context.SaveChangesAsync(); 
 
-                        // 4. VARYASYON ATTRIBUTE'LARINI KAYDET
                         if (variantModel.VariationAttributes != null && variantModel.VariationAttributes.Any())
                         {
                             foreach (var varAttr in variantModel.VariationAttributes)
@@ -620,18 +432,15 @@ namespace Pazaryeri.Repositories
                     }
                 }
 
-                // 5. RESİMLERİ KAYDET (Temp URL'lerden)
                 await SaveProductImages(product.Id, model.TempProductImageUrls);
                 await SaveVariantImages(model);
 
-                // TÜM İŞLEMLER BAŞARILI - COMMIT
                 await transaction.CommitAsync();
 
                 return product;
             }
             catch (Exception ex)
             {
-                // HATA DURUMUNDA - ROLLBACK
                 await transaction.RollbackAsync();
                 throw new Exception($"Ürün kaydı sırasında hata oluştu: {ex.Message}", ex);
             }
@@ -661,7 +470,6 @@ namespace Pazaryeri.Repositories
         {
             if (model.TempVariantImageUrls != null && model.TempVariantImageUrls.Any())
             {
-                // Tüm varyasyonları productId ile birlikte al
                 var variants = _context.ProductVariants
                     .Where(v => v.ProductId == model.Id)
                     .ToList();
@@ -755,17 +563,14 @@ namespace Pazaryeri.Repositories
 
         private async Task UpdateProductVariants(int productId, ProductViewModel model)
         {
-            // Mevcut varyasyonları al
             var existingVariants = await _context.ProductVariants
                 .Include(v => v.VariantAttributes)
                 .Include(v => v.VariantImages)
                 .Where(v => v.ProductId == productId)
                 .ToListAsync();
 
-            // Güncellenecek varyasyon ID'leri
             var updatedVariantIds = model.Variants?.Select(v => v.TempId).ToList() ?? new List<int>();
 
-            // Silinecek varyasyonları bul ve sil
             var variantsToDelete = existingVariants.Where(ev => !updatedVariantIds.Contains(ev.TempId)).ToList();
             foreach (var variantToDelete in variantsToDelete)
             {
@@ -789,7 +594,6 @@ namespace Pazaryeri.Repositories
                         existingVariant.Barcode = variantModel.Barcode;
                         existingVariant.UpdatedDate = DateTime.Now;
 
-                        // Varyasyon attribute'larını güncelle
                         _context.ProductVariantAttributes.RemoveRange(existingVariant.VariantAttributes);
 
                         if (variantModel.VariationAttributes != null)
@@ -809,7 +613,6 @@ namespace Pazaryeri.Repositories
                     }
                     else
                     {
-                        // YENİ VARYASYON EKLE
                         var newVariant = new ProductVariant
                         {
                             ProductId = productId,
@@ -825,7 +628,6 @@ namespace Pazaryeri.Repositories
                         _context.ProductVariants.Add(newVariant);
                         await _context.SaveChangesAsync();
 
-                        // Varyasyon attribute'larını ekle
                         if (variantModel.VariationAttributes != null)
                         {
                             foreach (var varAttr in variantModel.VariationAttributes)
@@ -841,7 +643,6 @@ namespace Pazaryeri.Repositories
                             }
                         }
 
-                        // Varyasyon resimlerini ekle
                         if (model.TempVariantImageUrls != null &&
                             model.TempVariantImageUrls.ContainsKey(variantModel.TempId))
                         {
@@ -872,6 +673,7 @@ namespace Pazaryeri.Repositories
                 .Include(p => p.Variants).ThenInclude(v => v.VariantImages)
                 .Include(p => p.Variants).ThenInclude(c => c.VariantAttributes)
                 .Include(p => p.Attributes)
+                .Include(p=>p.Trendyols)
             .FirstOrDefaultAsync(p => p.Id == id);
         }
 
@@ -935,7 +737,6 @@ namespace Pazaryeri.Repositories
 
             try
             {
-                // Önce tüm resimlerin main özelliğini kaldır
                 var productImages = await _context.ProductImages
                     .Where(pi => pi.ProductId == _context.ProductImages
                         .Where(pi2 => pi2.Id == imageId)
@@ -948,7 +749,6 @@ namespace Pazaryeri.Repositories
                     image.IsMainImage = false;
                 }
 
-                // Seçilen resmi main yap
                 var mainImage = await _context.ProductImages.FindAsync(imageId);
                 if (mainImage != null)
                 {
